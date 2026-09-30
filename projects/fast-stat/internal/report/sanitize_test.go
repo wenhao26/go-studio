@@ -3,6 +3,7 @@ package report
 import (
 	"strings"
 	"testing"
+	"unicode/utf8"
 )
 
 func TestSanitizeText(t *testing.T) {
@@ -71,6 +72,44 @@ func TestTruncate(t *testing.T) {
 				t.Errorf("Truncate(%q, %d) = %q 不是原串前缀", tt.in, tt.width, got)
 			}
 		})
+	}
+}
+
+// TestSanitizeText_InvalidUTF8 固化无效字节序列的边界行为。
+//
+// 无效 UTF-8 在 range 时被解码为 U+FFFD（不属于需剥离的控制字符），因此原样透传。
+// 这不是安全问题（不含控制字符），因此不改变行为，仅锁定「不得引入控制字符、不得 panic」。
+func TestSanitizeText_InvalidUTF8(t *testing.T) {
+	for _, in := range []string{"\xff\xfe", "a\xffb", "\x80\x81\x82"} {
+		got := SanitizeText(in)
+		for _, r := range got {
+			if isUnsafeRune(r) {
+				t.Errorf("SanitizeText(%q) = %q 仍含控制字符 %U", in, got, r)
+			}
+		}
+	}
+}
+
+// TestTruncate_UnicodeBoundaries 覆盖按显示宽度截断时的多字节边界。
+//
+// 重点是「不得把字符切坏」：结果必须是合法 UTF-8，且不含替换字符。
+func TestTruncate_UnicodeBoundaries(t *testing.T) {
+	inputs := []string{"中文测试", "🚀🚀🚀", "a中b文c", "日本語テキスト"}
+
+	for _, in := range inputs {
+		for width := 1; width <= DisplayWidth(in)+2; width++ {
+			got := Truncate(in, width)
+
+			if !utf8.ValidString(got) {
+				t.Errorf("Truncate(%q, %d) = %q 不是合法 UTF-8", in, width, got)
+			}
+			if strings.ContainsRune(got, utf8.RuneError) {
+				t.Errorf("Truncate(%q, %d) = %q 出现 U+FFFD（字符被切坏）", in, width, got)
+			}
+			if w := DisplayWidth(got); w > width {
+				t.Errorf("Truncate(%q, %d) = %q 宽度 %d 超限", in, width, got, w)
+			}
+		}
 	}
 }
 

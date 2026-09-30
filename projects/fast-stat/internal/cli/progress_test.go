@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"errors"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -173,6 +174,33 @@ func TestProgressRenderer_TruncatesToWidth(t *testing.T) {
 	line := strings.TrimPrefix(buf.String(), "\r")
 	if got := report.DisplayWidth(line); got > width {
 		t.Errorf("进度行宽度 = %d, 不应超过 %d", got, width)
+	}
+}
+
+// TestProgressRenderer_TinyWidth 覆盖终端宽度极小/为 0 的边界：
+// 不得 panic，且一旦有宽度上限就不能超限。
+func TestProgressRenderer_TinyWidth(t *testing.T) {
+	base := time.Date(2026, 9, 30, 10, 0, 0, 0, time.UTC)
+
+	for _, width := range []int{0, 1, 2} {
+		t.Run(strconv.Itoa(width), func(t *testing.T) {
+			var buf bytes.Buffer
+			p := newProgressRenderer(&buf, width)
+			p.startedAt = base
+			p.prevAt = base
+
+			// 只检查 update 产生的这一帧；finish 会额外写入清行输出。
+			if width >= 1 {
+				line := strings.TrimPrefix(buf.String(), "\r")
+				if got := report.DisplayWidth(line); got > width {
+					t.Errorf("宽度 %d 时渲染出 %d 列: %q", width, got, line)
+				}
+			}
+
+			// finish 在任意宽度下都不得 panic。
+			buf.Reset()
+			p.finish()
+		})
 	}
 }
 

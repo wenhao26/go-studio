@@ -295,6 +295,59 @@ func TestScan_CountsIrregularEntriesWhenStatFails(t *testing.T) {
 	}
 }
 
+// failingInfoEntry 模拟「条目存在但无法读取元数据」的边界场景。
+//
+// 真实触发条件：扫描过程中文件被删除、或元数据查询被拒绝。
+// 注意它必须是独立的 DirEntry 实现——fs.FileInfoToDirEntry 永远不会返回错误，
+// 无法构造这条分支。
+type failingInfoEntry struct {
+	name string
+	err  error
+}
+
+func (e failingInfoEntry) Name() string               { return e.name }
+func (e failingInfoEntry) IsDir() bool                { return false }
+func (e failingInfoEntry) Type() fs.FileMode          { return 0 }
+func (e failingInfoEntry) Info() (fs.FileInfo, error) { return nil, e.err }
+
+// TestScan_EntryInfoFailureIsCountedAndRecorded 固化边界取舍：
+// 条目已由目录列表确认存在，因此仍计入文件数；拿不到大小按 0 处理并记录错误，
+// 而不是中断扫描或从文件中静默剔除。
+func TestScan_EntryInfoFailureIsCountedAndRecorded(t *testing.T) {
+	root := "inforoot"
+	gone := filepath.Join(root, "gone.txt")
+
+	fsys := &fakeFS{
+		entries: map[string][]fs.DirEntry{
+			root: {
+				failingInfoEntry{name: "gone.txt", err: &fs.PathError{Op: "lstat", Path: gone, Err: fs.ErrNotExist}},
+				fileEntry("ok.txt", 5),
+			},
+		},
+		infos: map[string]fs.FileInfo{root: dirInfo(root)},
+	}
+
+	snap, err := New(fsys).Scan(context.Background(), Options{Root: root})
+	if err != nil {
+		t.Fatalf("单个条目的元数据失败不应中断扫描，got %v", err)
+	}
+	if snap.FilesFound != 2 {
+		t.Errorf("FilesFound = %d, want 2（元数据失败的条目仍计入）", snap.FilesFound)
+	}
+	if snap.TotalSizeBytes != 5 {
+		t.Errorf("TotalSizeBytes = %d, want 5（失败条目按 0 字节）", snap.TotalSizeBytes)
+	}
+	if snap.SkippedErrors != 1 {
+		t.Errorf("SkippedErrors = %d, want 1", snap.SkippedErrors)
+	}
+	if len(snap.ErrorDetails) != 1 {
+		t.Fatalf("ErrorDetails 条数 = %d, want 1", len(snap.ErrorDetails))
+	}
+	if !errors.Is(snap.ErrorDetails[0], fs.ErrNotExist) {
+		t.Error("错误明细应可通过 errors.Is 判定为 fs.ErrNotExist")
+	}
+}
+
 func TestScan_CountsSpecialFiles(t *testing.T) {
 	root := "specialroot"
 	fsys := &fakeFS{

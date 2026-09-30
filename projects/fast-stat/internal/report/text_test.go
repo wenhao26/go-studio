@@ -225,6 +225,43 @@ func TestText_VerboseRows(t *testing.T) {
 	}
 }
 
+// TestText_VerboseLongErrorDetailIsTruncated 覆盖诊断区的超长内容：
+// 错误明细可能包含很深的路径，必须与其它行一样被截断，否则边框会错位。
+func TestText_VerboseLongErrorDetailIsTruncated(t *testing.T) {
+	in := sampleInput()
+	in.Verbose = true
+	in.Snapshot.ErrorDetails = []scan.ScanError{{
+		Path: "/very/deep/" + strings.Repeat("长", 80),
+		Err:  fs.ErrPermission,
+	}}
+
+	out := Text(in)
+	for i, line := range textLines(out) {
+		if got := DisplayWidth(line); got != contentWidth+2 {
+			t.Errorf("第 %d 行显示宽度 = %d, 期望 %d", i, got, contentWidth+2)
+		}
+	}
+	if strings.Contains(out, strings.Repeat("长", 80)) {
+		t.Error("超长错误明细未被截断")
+	}
+}
+
+// TestText_EmptyTargetPath 覆盖空路径的边界：不应 panic，且行宽仍需一致。
+func TestText_EmptyTargetPath(t *testing.T) {
+	in := sampleInput()
+	in.TargetPath = ""
+
+	out := Text(in)
+	for i, line := range textLines(out) {
+		if got := DisplayWidth(line); got != contentWidth+2 {
+			t.Errorf("第 %d 行显示宽度 = %d, 期望 %d", i, got, contentWidth+2)
+		}
+	}
+	if !strings.Contains(out, "Target Path") {
+		t.Error("空路径下仍应输出标签")
+	}
+}
+
 // TestText_VerboseWithoutErrors 覆盖「开启 verbose 但没有错误」的路径。
 func TestText_VerboseWithoutErrors(t *testing.T) {
 	in := sampleInput()

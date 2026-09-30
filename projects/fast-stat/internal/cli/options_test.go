@@ -92,10 +92,26 @@ func TestParse(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			// JSON 报告没有排版，--plain 与之矛盾；静默忽略会让用户误以为生效。
 			name:    "plain with json is rejected",
 			args:    []string{"--plain", "--format", "json"},
 			wantErr: true,
+		},
+		{
+			// 空 --path 会走「未指定」分支，等价于当前目录，而不是报错或扫描空路径。
+			name: "empty path flag falls back to current directory",
+			args: []string{"--path", ""},
+			want: Options{Path: ".", Format: FormatText},
+		},
+		{
+			// 支持用 -- 结束选项解析，从而统计以短横线开头的目录名。
+			name: "double dash stops flag parsing",
+			args: []string{"--plain", "--", "--weird-dir"},
+			want: Options{Path: "--weird-dir", Format: FormatText, Plain: true},
+		},
+		{
+			name: "repeated flag uses the last value",
+			args: []string{"--path", "a", "--path", "b"},
+			want: Options{Path: "b", Format: FormatText},
 		},
 		{
 			name: "path is cleaned",

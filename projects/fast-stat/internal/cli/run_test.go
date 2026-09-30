@@ -364,6 +364,27 @@ func TestApp_Run_Plain(t *testing.T) {
 	}
 }
 
+// TestApp_Run_NoEmojiPlusPlain 覆盖两个降级开关同时使用（写日志的典型组合）。
+func TestApp_Run_NoEmojiPlusPlain(t *testing.T) {
+	root := fixtureTree(t)
+
+	got := runApp(t, context.Background(), false, "--path", root, "--no-emoji", "--plain", "--verbose")
+
+	if got.code != ExitOK {
+		t.Fatalf("退出码 = %d, want %d (stderr=%q)", got.code, ExitOK, got.stderr)
+	}
+	for _, forbidden := range []string{"🚀", "📂", "📄", "📦", "🚫", "╔", "║", "═", "╚"} {
+		if strings.Contains(got.stdout, forbidden) {
+			t.Errorf("降级模式下仍出现装饰字符 %q:\n%s", forbidden, got.stdout)
+		}
+	}
+	for _, want := range []string{"FASTSTAT SCAN REPORT", "Target Path", "Directories Visited", "Workers"} {
+		if !strings.Contains(got.stdout, want) {
+			t.Errorf("降级报告缺少 %q:\n%s", want, got.stdout)
+		}
+	}
+}
+
 func TestNew_RejectsNilWriters(t *testing.T) {
 	var buf bytes.Buffer
 

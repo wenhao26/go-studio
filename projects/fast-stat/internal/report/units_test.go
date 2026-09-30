@@ -1,6 +1,8 @@
 package report
 
 import (
+	"math"
+	"strings"
 	"testing"
 	"time"
 )
@@ -66,6 +68,41 @@ func TestFormatCount(t *testing.T) {
 
 // TestFormatDuration 固化耗时的双档位格式：
 // 亚秒用毫秒（避免毫秒级扫描被显示成 "0.00s"），秒级用两位小数（与 PRD 示例一致）。
+// TestCountAndBytesExtremes 覆盖数值上界，确认不会溢出或产生负值。
+func TestCountAndBytesExtremes(t *testing.T) {
+	t.Run("max int64 count", func(t *testing.T) {
+		want := "9,223,372,036,854,775,807"
+		if got := FormatCount(math.MaxInt64); got != want {
+			t.Errorf("FormatCount(MaxInt64) = %q, want %q", got, want)
+		}
+	})
+
+	t.Run("max int64 bytes stays positive and in GB", func(t *testing.T) {
+		got := FormatBytes(math.MaxInt64)
+		if !strings.HasSuffix(got, " GB") {
+			t.Errorf("FormatBytes(MaxInt64) = %q, 应落在 GB 档", got)
+		}
+		if strings.HasPrefix(got, "-") {
+			t.Errorf("FormatBytes(MaxInt64) = %q, 不应为负", got)
+		}
+	})
+
+	t.Run("count boundary at each thousand", func(t *testing.T) {
+		cases := map[int64]string{
+			1:          "1",
+			999:        "999",
+			1000:       "1,000",
+			1000000:    "1,000,000",
+			1000000000: "1,000,000,000",
+		}
+		for in, want := range cases {
+			if got := FormatCount(in); got != want {
+				t.Errorf("FormatCount(%d) = %q, want %q", in, got, want)
+			}
+		}
+	})
+}
+
 func TestFormatDuration(t *testing.T) {
 	tests := []struct {
 		name string

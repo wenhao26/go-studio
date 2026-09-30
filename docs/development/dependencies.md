@@ -31,6 +31,28 @@ AI Agent 与开发者在编写新模块时，**仅允许使用以下白名单依
 | **并发工具** | `golang.org/x/sync` (`errgroup`) | 推荐官方扩展包 |
 | **单元测试与 Mock** | `github.com/stretchr/testify`, `go.uber.org/mock` | - |
 | **JSON 序列化** | `encoding/json` 或 `github.com/bytedance/sonic` | 高吞吐场景可使用 sonic |
+| **CLI / 终端工具链** | `github.com/mattn/go-runewidth`, `github.com/mattn/go-isatty` | 仅限 `projects/fast-stat`（见 §2.1），且仅用于标准库无法覆盖的终端宽度计算与 TTY 判定；CLI 框架优先使用标准库 `flag` |
+
+---
+
+## 2.1 项目级依赖批准记录 (Per-project Approvals)
+
+`projects/fast-stat` 所需的终端能力**无法用标准库实现**，经需求方裁决（决策 P0-1，路线 R4）批准以下最小组合：
+
+| 依赖 | 用途 | 不可替代性说明 |
+|---|---|---|
+| `github.com/mattn/go-runewidth` | 终端显示宽度计算（东亚宽字符与 emoji 按 2 列） | Go 标准库不提供任何「终端显示宽度」能力；用字节数或码点数计算会让含中文/emoji 的报告必然错位 |
+| `github.com/mattn/go-isatty` | 判断 stdout 是否连接到终端 | 标准库无等价能力；判错会把进度行写进重定向文件，污染可被管道解析的输出 |
+| `go.uber.org/zap` | 诊断日志（输出到 stderr） | 已在通用白名单内，遵循 `observability.md` 的强制要求 |
+
+明确**未批准**引入（避免传递依赖膨胀，见 §1 极简原则）：
+
+- `github.com/charmbracelet/bubbletea` / `lipgloss` / `bubbles`（全屏 TUI）
+- `github.com/schollz/progressbar`、`cheggaaa/pb`、`vbauerster/mpb`（进度条）
+- `github.com/spf13/cobra`、`urfave/cli`（CLI 框架）
+- `golang.org/x/term`（终端宽度探测：改用 `COLUMNS` 环境变量 + 默认值回退）
+
+> 变更流程：本节内容如需调整，必须先修改本文件并经 Code Review，再修改代码（见 `docs/README.md` §3）。
 
 ---
 

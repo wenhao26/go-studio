@@ -99,6 +99,9 @@ type Scanner struct {
 }
 
 // New 构造 Scanner。
+//
+// fsys 允许为 nil：Scan 会返回错误而不是 panic，使调用方在依赖组装阶段
+// 可以容忍缺失实现，也让「忘记注入文件系统」这一错误以普通错误的形式暴露。
 func New(fsys fsx.FileSystem) *Scanner {
 	return &Scanner{fsys: fsys}
 }

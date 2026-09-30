@@ -15,6 +15,10 @@ import "sync"
 // 深度优先遍历让相邻目录的访问在时间上聚集，对机械硬盘的寻道与带预读的 SSD
 // 都更友好；同时待处理路径的堆积量只与「当前分支深度 × 每层待处理目录数」相关，
 // 而不是整棵树的宽度。
+//
+// 唤醒一律使用 Broadcast 而非 Signal：等待条件是多个状态的组合
+// （栈为空 && 仍有在途任务 && 未关闭），而 done 使条件成立时往往有多个等待者
+// 需要同时退出；Signal 只唤醒一个，其余会永久阻塞在 Wait 上。
 type workQueue struct {
 	mu       sync.Mutex
 	cond     *sync.Cond
@@ -68,6 +72,9 @@ func (q *workQueue) pop() (string, bool) {
 //
 // 必须在把该目录的子目录 push 之后调用：否则会出现「栈为空且 inFlight 归零」的
 // 瞬时状态，让其他 worker 误判遍历结束而漏扫整棵子树。
+//
+// inFlight 的判断是防御性的：正常情况下它必然大于 0，写成判断是为了让计数永不
+// 变成负数——负值会让等待条件永久成立，从而挂死所有 worker。
 func (q *workQueue) done() {
 	q.mu.Lock()
 	if q.inFlight > 0 {

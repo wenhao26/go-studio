@@ -111,6 +111,13 @@ func dirInfo(name string) fs.FileInfo {
 	return fakeInfo{name: name, mode: fs.ModeDir | 0o755}
 }
 
+// TestScan_NestedTree 覆盖多层目录聚合与符号链接排除。
+//
+// 目录树：root/{ a/{a1:10B, a2:20B}, b/{deep/{d1:5B}}, x.txt:100B, link→文件 }，
+// 其中 a、b、deep 为目录，link 为符号链接。
+//
+// 期望：目录 4 个（root、a、b、deep）、文件 4 个（a1、a2、d1、x.txt，不含 link）、
+// 总大小 135 字节。
 func TestScan_NestedTree(t *testing.T) {
 	root := "rootdir"
 	dirA := filepath.Join(root, "a")
@@ -574,6 +581,11 @@ func TestScan_ReusableScanner(t *testing.T) {
 	}
 }
 
+// TestScan_WorkersOptionIsRespected 覆盖并发度入参的收敛。
+//
+// 取值刻意包含 0（表示自动）、正常值，以及负数与超上限：后两者必须被静默收敛为
+// 合法值，而不是报错或耗尽资源。CLI 侧会对明显非法的数值提前报用法错误（退出码 2），
+// 这里验证的是遍历层自身也安全——它可能被其他调用方直接使用。
 func TestScan_WorkersOptionIsRespected(t *testing.T) {
 	root := "workers"
 	fsys := &fakeFS{

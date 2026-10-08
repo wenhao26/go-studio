@@ -7,6 +7,13 @@
 #   3. 密钥类规则只是兜底，真正的防线是提交前的 secret 扫描
 #      （见 docs/development/security.md §3.1）。
 #
+# 路径匹配要点（本文件反复用到，容易踩坑）：
+#   * 模式中只要出现斜杠（末尾斜杠除外），就会被锚定到本文件所在目录。
+#     因此 ".idea/*" 只匹配仓库根的 .idea，漏掉 projects/.idea/；
+#     要在任意层级匹配必须写成 "**/.idea/*"。
+#   * 不能写成 ".idea/"：整目录排除后 git 不再进入该目录，
+#     其下的 ! 例外规则将全部失效。必须用 "/*" 只排除条目、保留目录本身。
+#
 # 校验方式：
 #   git status --ignored --short              # 查看实际被忽略的条目
 #   git check-ignore -v <path>                # 查看某路径命中了哪一条规则
@@ -27,11 +34,16 @@ dist/
 *.test
 *.out
 
+# 调试器产物（GoLand 与 VS Code + Delve 的默认输出名）
+__debug_bin*
+
 # ----------------------------------------------------------------------------
 # 覆盖率与性能分析产物
 # 说明：coverage.out 由上面的 *.out 覆盖，此处不重复列出。
 # ----------------------------------------------------------------------------
 coverage.html
+coverage.xml
+coverage.json
 *.coverprofile
 *.prof
 *.pprof
@@ -51,59 +63,87 @@ go.work.sum
 
 # ----------------------------------------------------------------------------
 # 配置与密钥 —— 严禁提交任何真实凭证
-# 注意：.env.example 是模板，必须入库，因此用 ! 显式放开。
+# 注意：.env.example 与 .env.<环境>.example 是模板，必须入库，因此用 ! 显式放开。
+# 下面的私钥类规则只匹配私钥本体：id_rsa.pub 这类公钥不会命中（可正常入库）。
 # ----------------------------------------------------------------------------
 .env
 .env.*
 !.env.example
+!.env.*.example
 *.pem
 *.key
 *.crt
 *.p12
 *.pfx
+*.p8
 *.jks
 *.keystore
 secrets.yaml
 secrets.yml
+credentials.json
+service-account*.json
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
 
 # ----------------------------------------------------------------------------
 # IDE / 编辑器
 # 只保留团队共享的代码风格配置（GoLand 需与 gofmt 对齐，见
 # PROJECT_ALIGNMENT_REPORT.md §3.0.2），其余均为个人本地状态，不入库。
-# .idea/* 只排除其下条目而非目录本身，因此下面的 ! 例外可以生效。
+#
+# 用 **/.idea/* 而非 .idea/*：后者含斜杠被锚定到仓库根，会让
+# projects/.idea/ 下的 modules.xml、vcs.xml 等漏网（见文件头「路径匹配要点」）。
+# 用 /* 只排除条目、不排除 .idea 目录本身，因此下面的 ! 例外可以生效。
 # ----------------------------------------------------------------------------
-.idea/*
-!.idea/codeStyles/
-!.idea/codeStyles/**
-!.idea/codeStyleSettings.xml
+**/.idea/*
+!**/.idea/codeStyles/
+!**/.idea/codeStyles/**
+!**/.idea/codeStyleSettings.xml
 *.iml
 *.ipr
 *.iws
 
-.vscode/*
-!.vscode/settings.json
-!.vscode/extensions.json
+**/.vscode/*
+!**/.vscode/settings.json
+!**/.vscode/extensions.json
 
-*.swp
-*.swo
-*~
-\#*\#
-.\#*
+# JetBrains 新一代 IDE 的本地状态
+.fleet/
+
+# 其他编辑器的本地状态。
+# 刻意不忽略 .editorconfig、.dir-locals.el 这类「团队共享的编辑器配置」——
+# 它们属于设计原则 2 中必须入库的东西。
+.cursor/
+.history/
+*.sublime-workspace
+Session.vim
+.classpath
+.project
+.settings/
 
 # ----------------------------------------------------------------------------
 # 操作系统
 # ----------------------------------------------------------------------------
+# macOS
 .DS_Store
 .AppleDouble
 .LSOverride
 ._*
 .Spotlight-V100
 .Trashes
+.fseventsd
+.TemporaryItems
+.DocumentRevisions-V100
+.VolumeIcon.icns
 
+# Windows
 Thumbs.db
 ehthumbs.db
 desktop.ini
 $RECYCLE.BIN/
+System Volume Information/
+*.lnk
 
 # ----------------------------------------------------------------------------
 # 日志、临时文件与备份（禁止入库，见 AGENTS.md §78）
@@ -117,12 +157,14 @@ $RECYCLE.BIN/
 *.orig
 *.rej
 debug.log
+nohup.out
 test-output.txt
 
 # ----------------------------------------------------------------------------
 # 本项目产物兜底
-# fast-stat 的报告建议输出到仓库之外；此处仅对文档化的产物命名做兜底，
+# fast-stat 的报告建议输出到仓库之外；此处对文档中出现的命名做兜底，
 # 避免误把扫描结果提交进仓库。
+#   README 示例：D:\www-faststat.json、D:\www-faststat.txt
+# *-faststat.* 同时覆盖 .json / .txt 及 --format 后续新增的扩展名。
 # ----------------------------------------------------------------------------
-*-faststat.json
-*-faststat.txt
+*-faststat.*

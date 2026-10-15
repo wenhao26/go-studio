@@ -52,6 +52,34 @@ AI Agent 与开发者在编写新模块时，**仅允许使用以下白名单依
 - `github.com/spf13/cobra`、`urfave/cli`（CLI 框架）
 - `golang.org/x/term`（终端宽度探测：改用 `COLUMNS` 环境变量 + 默认值回退）
 
+---
+
+## 2.2 file-pilot 项目级依赖批准记录 (Per-project Approvals)
+
+`projects/file-pilot` 是 Windows 桌面应用，其形态依赖**无法用标准库实现**，经需求方裁决（决策 P0-1，2026-10-15）批准以下组合：
+
+| 依赖 | 用途 | 不可替代性说明 |
+|---|---|---|
+| `github.com/wailsapp/wails/v2` | 桌面窗口、Go↔JS 绑定方法、事件推送、原生目录对话框 | 桌面应用形态由其决定；标准库不提供窗口、绑定与事件能力 |
+| `modernc.org/sqlite` | 纯 Go SQLite 驱动 | 无 CGO，Windows 构建与分发无需 gcc（决策 D-2） |
+| `go.uber.org/zap` | 诊断日志 | 已在通用白名单内，遵循 `observability.md` |
+
+**技术验证结论**（2026-10-15，Go 1.25.4 实机 + 源码核对）：
+
+- Windows 隐藏/系统属性与文件创建时间可经 `fi.Sys().(*syscall.Win32FileAttributeData)` 以**纯标准库**读取，实测有效；
+- 长路径（321 字符）创建、stat、改名全部正常（Go 自动 `\\?\` 归一）。
+
+因此**不引入** `golang.org/x/sys/windows`。
+
+明确**未批准**（避免传递依赖膨胀，见 §1 极简原则）：
+
+- `github.com/golang-migrate/migrate`（改用 `schema_version` + 嵌入式 SQL 步进）
+- `gopkg.in/natefinch/lumberjack.v2`（日志滚动自实现）
+- `golang.org/x/sys/windows`（用标准库 `syscall`）
+- DI 框架、后端侧 UI 组件库、进度条库
+
+---
+
 > 变更流程：本节内容如需调整，必须先修改本文件并经 Code Review，再修改代码（见 `docs/README.md` §3）。
 
 ---

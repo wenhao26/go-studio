@@ -1,0 +1,12 @@
+# file-pilot 项目级忽略规则。
+# 根 .gitignore 已覆盖：bin/、dist/（含 frontend/dist）、*.exe、*.dll、*.out、__debug_bin*。
+# 此处仅补充根规则未覆盖的条目。
+
+# 前端依赖（可由 package.json + package-lock.json 重新安装）
+node_modules/
+
+# Wails 构建期缓存（由 wails build/dev 按 package.json 内容重新生成）
+frontend/package.json.md5
+
+# 覆盖率 profile 产物（go test -coverprofile=coverage ./...，文本以 "mode: set" 开头）
+coverage

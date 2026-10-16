@@ -89,3 +89,7 @@ Phase 4  增强（非 v1：自动整理 / 历史 / 学习 / 重复检测）
 | 2026-10-15 | Phase 2 验收 | 需求方验收通过，授权进入 Phase 3 |
 | 2026-10-15 | Phase 3 实施 | 安全移动（冲突绝不覆盖）+ 操作记录（`operations`）+ 整理报告（FR-10）+ 撤销（FR-11）+ 前端 P3 开始整理 / P4 进度·报告·撤销；`tasks.parent_task_id`/`undone`、`StartOrganize`/`GetOrganizeReport`/`UndoLastOrganize` 三个绑定；编码裁决 D-D1 ~ D-D8 归档 |
 | 2026-10-15 | Phase 3 验收 / **v1 交付** | 需求方验收通过 Phase 1、Phase 3；批准 D-D9（`GetScanSummary` 追加 `organizable_count`）；FR-12 恢复横幅按现状接受。**v1（Phase 1–3）交付完成**，Phase 4 为 v1 之外 backlog（不实现） |
+| 2026-10-15 | v1 体验优化与打包交付 | 导航栏图标与选中态样式；最近目录支持单个移除（`RemoveRecentDir`，绑定面 14→15，见 [`contracts.md`](contracts.md) §5）；日志时间戳本地化（`formatLogTime`，UTC ms → 本地 `HH:mm:ss`）；一键打包脚本 `build.ps1`/`build.bat`；项目 `README.md` 增打包分发章节 |
+| 2026-10-16 | 文档与提示图标 | 项目 `README.md` 增「项目结构」并重排章节编号；新增实心状态图标组件 `StatusIcon.vue`（success/error/warning/info/loading），扫描 / 结果 / 整理各页提示统一带图标 |
+| 2026-10-16 | 主题与品牌 | 全量浅色主题改造（卡片 / 输入 / 日志面板 / 提示横幅 / 主窗口底色）；新增**深色模式切换**：顶栏日 / 月按钮，`<html class="dark">` + Tailwind `dark:` 变体，选择持久化 localStorage，`index.html` 内联脚本防深色启动闪屏；品牌标志重设计：无背景「文件夹 + 归位箭头」渐变图形；扫描 / 结果 / 整理三页路径行补「目录：」标签与图标；补 `main.go` assets 与事件载荷结构体注释 |
+| 2026-10-16 | 应用图标 | 新 Logo 生成为应用图标：`build/appicon.png`（1024×1024 透明底）；wails 打包器仅在 `build/windows/icon.ico` 缺失时才从 `appicon.png` 重建（`generateIcoFile`），故删除旧默认 `icon.ico` 后重新生成（256/128/64/48/32/16 六档 PNG 条目）并嵌入 exe |

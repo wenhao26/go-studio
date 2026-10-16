@@ -59,28 +59,104 @@ const canUndo = computed(
   () => lastAction.value === 'organize' && report.value !== null && report.value.success_count > 0,
 )
 
-// 日志区：贴在底部时自动滚动（与扫描页一致）。
+// 日志区：最新日志置顶展示，面板钉在顶部（与扫描页一致，判定细节见 ScanView 注释：
+// 只有真实用户输入才能进入「暂停跟随」，浏览器自动改写 scrollTop 不得触发）。
 const logEl = ref<HTMLElement | null>(null)
-const stickToBottom = ref(true)
+const userTookOver = ref(false)
+
+// pointerHeld 记录指针是否按住：按住指针且真的滚动了（拖滚动条）才算用户接管，
+// 单纯点一下不算。仅在事件处理里读写，无需响应式。
+let pointerHeld = false
+
+// displayLogs 把到达顺序（旧→新）反转成展示顺序（新→旧）以配合钉顶。
+const displayLogs = computed(() => [...state.logs].reverse())
+
+function onPointerDown(): void {
+  pointerHeld = true
+  // 松手位置可能在日志区之外（拖滚动条后移出），用一次性全局监听兜底：
+  // pointerHeld 若永久为 true，浏览器自动位移会被误判成用户接管。
+  window.addEventListener('pointerup', onPointerUp, { once: true })
+}
+
+function onPointerUp(): void {
+  pointerHeld = false
+}
+
+// onWheelIntent：向下滚动即查看更早的日志（最新在顶部），进入阅读模式；
+// 向上滚动（面板已在顶部）不改变跟随状态。
+function onWheelIntent(event: WheelEvent): void {
+  if (event.deltaY > 0) {
+    userTookOver.value = true
+  }
+}
+
+// onTouchIntent：触摸拖动日志区同样视为用户接管。
+function onTouchIntent(): void {
+  userTookOver.value = true
+}
 
 function onLogScroll(): void {
   const el = logEl.value
   if (!el) {
     return
   }
-  stickToBottom.value = el.scrollHeight - el.scrollTop - el.clientHeight < 40
+  if (pointerHeld) {
+    if (el.scrollTop > 40) {
+      userTookOver.value = true
+    }
+    return
+  }
+  // 跟随中的非用户位移（滚动锚定等）立即拉回顶部，保证最新日志始终可见。
+  if (!userTookOver.value && el.scrollTop !== 0) {
+    el.scrollTop = 0
+  }
+}
+
+// 点悬浮按钮回到顶部并恢复跟随（等价于用户手动滚回顶部）。
+function resumeFollow(): void {
+  const el = logEl.value
+  if (el) {
+    el.scrollTop = 0
+  }
+  userTookOver.value = false
 }
 
 watch(
-  () => state.logs.length,
+  () => state.logs[state.logs.length - 1]?.id,
   async () => {
-    if (!stickToBottom.value) {
+    const el = logEl.value
+    if (!el) {
       return
     }
+    const nearTop = el.scrollTop < 40
+    const stick = !userTookOver.value || nearTop
+    // 下翻阅读补偿：新行插入列表头部会下推下方内容，按首行位移补回 scrollTop
+    // （面板用 [overflow-anchor:none] 关闭了浏览器滚动锚定，改为手动补偿）。
+    const anchor = stick ? null : el.firstElementChild
+    const anchorTop = anchor ? anchor.getBoundingClientRect().top : 0
     await nextTick()
-    const el = logEl.value
-    if (el) {
-      el.scrollTop = el.scrollHeight
+    const pane = logEl.value
+    if (!pane) {
+      return
+    }
+    if (stick) {
+      pane.scrollTop = 0
+      userTookOver.value = false
+      // 浏览器可能在本次布局里再次改写 scrollTop（滚动锚定）：下一帧补钉一次，
+      // 让「最新在顶部」不依赖 scroll 事件是否派发（WebView2 实测偶有不派发）。
+      requestAnimationFrame(() => {
+        const p = logEl.value
+        if (p && !userTookOver.value && p.scrollTop !== 0) {
+          p.scrollTop = 0
+        }
+      })
+      return
+    }
+    if (anchor && anchor.isConnected) {
+      const shift = anchor.getBoundingClientRect().top - anchorTop
+      if (shift > 0) {
+        pane.scrollTop += shift
+      }
     }
   },
 )
@@ -235,14 +311,17 @@ const reportIcon = computed((): 'success' | 'warning' | 'error' | 'info' => {
           <div class="h-full rounded-full bg-indigo-600 transition-all dark:bg-indigo-500" :style="{ width: percent + '%' }" />
         </div>
 
-        <div class="mt-4 flex min-h-0 flex-1 flex-col rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700/60 dark:bg-slate-950/60">
+        <div class="relative mt-4 flex min-h-0 flex-1 flex-col rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700/60 dark:bg-slate-950/60">
           <div class="flex items-center justify-between border-b border-slate-200 px-4 py-2 dark:border-slate-700/60">
             <span class="text-xs font-medium text-slate-500 dark:text-slate-400">日志</span>
-            <span class="text-xs text-slate-400 dark:text-slate-500">上限 {{ LOG_LIMIT }} 行</span>
+            <span class="flex items-center gap-2">
+              <span v-if="userTookOver" class="rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-700 dark:bg-amber-400/15 dark:text-amber-300">已暂停跟随</span>
+              <span class="text-xs text-slate-400 dark:text-slate-500">上限 {{ LOG_LIMIT }} 行</span>
+            </span>
           </div>
-          <div ref="logEl" class="min-h-0 flex-1 overflow-y-auto px-4 py-2 font-mono text-xs leading-relaxed" @scroll="onLogScroll">
+          <div ref="logEl" class="min-h-0 flex-1 [overflow-anchor:none] overflow-y-auto px-4 py-2 font-mono text-xs leading-relaxed" @wheel.passive="onWheelIntent" @touchmove.passive="onTouchIntent" @pointerdown="onPointerDown" @scroll="onLogScroll">
             <p v-if="!state.logs.length" class="py-4 text-center text-slate-400 dark:text-slate-500">暂无日志</p>
-            <div v-for="entry in state.logs" :key="entry.id" class="flex gap-3 py-0.5">
+            <div v-for="entry in displayLogs" :key="entry.id" class="flex gap-3 py-0.5">
               <span class="shrink-0 tabular-nums text-slate-400 dark:text-slate-500">{{ formatLogTime(entry.ts) }}</span>
               <span class="shrink-0 rounded px-1.5 text-[10px] leading-5" :class="entry.kind === 'system' ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200' : 'bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400'">
                 {{ logKindLabel(entry.kind) }}
@@ -250,6 +329,7 @@ const reportIcon = computed((): 'success' | 'warning' | 'error' | 'info' => {
               <span class="min-w-0 whitespace-pre-wrap break-all text-slate-700 dark:text-slate-300">{{ entry.text }}</span>
             </div>
           </div>
+          <button v-if="userTookOver" type="button" class="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-amber-300 bg-white/95 px-3 py-1 text-xs text-amber-700 shadow-sm hover:bg-white dark:border-amber-400/40 dark:bg-slate-800/95 dark:text-amber-300 dark:hover:bg-slate-800" @click="resumeFollow">已暂停跟随 · 回到最新</button>
         </div>
       </template>
 

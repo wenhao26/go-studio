@@ -296,7 +296,14 @@ function onLog(payload: LogPayload): void {
   if (!payload.entries || payload.entries.length === 0) {
     return
   }
-  const appended = payload.entries.map((entry) => ({ ...entry, id: nextLogID++ }))
-  const merged = state.logs.concat(appended)
-  state.logs = merged.length > LOG_LIMIT ? merged.slice(merged.length - LOG_LIMIT) : merged
+  // 原地追加 + 头部裁剪，而非 concat/slice 重建数组：日志按 200ms 窗口成批到达，
+  // 环形缓冲打满后每批都要淘汰头部若干条；重建会让每批多出一次 500 元素数组的
+  // 分配，原地变更让 Vue 按增量更新列表（更省 GC，长扫描下日志区更流畅）。
+  for (const entry of payload.entries) {
+    state.logs.push({ ...entry, id: nextLogID++ })
+  }
+  const overflow = state.logs.length - LOG_LIMIT
+  if (overflow > 0) {
+    state.logs.splice(0, overflow)
+  }
 }

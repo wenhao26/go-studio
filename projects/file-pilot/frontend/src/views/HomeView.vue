@@ -9,6 +9,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import * as API from '../../wailsjs/go/app/API'
 import type { scanner } from '../../wailsjs/go/models'
+import StatusIcon from '../components/StatusIcon.vue'
 import { friendlyMessage, NOT_SELECTED_DIR } from '../lib/errors'
 import { ensureTask, hasRunningTask } from '../lib/task'
 
@@ -153,8 +154,12 @@ async function startScan(): Promise<void> {
     <h1 class="text-2xl font-semibold text-slate-100">开始扫描</h1>
     <p class="mt-1 text-sm text-slate-400">选择一个目录，配置扫描参数后开始。</p>
 
-    <p v-if="loading" class="mt-6 text-sm text-slate-400">正在加载设置…</p>
-    <p v-else-if="loadError" class="mt-6 rounded-md border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
+    <p v-if="loading" class="mt-6 flex items-center gap-2 text-sm text-slate-400">
+      <StatusIcon kind="loading" />
+      正在加载设置…
+    </p>
+    <p v-else-if="loadError" class="mt-6 flex items-center gap-2 rounded-md border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
+      <StatusIcon kind="error" />
       {{ loadError }}
     </p>
 
@@ -179,7 +184,10 @@ async function startScan(): Promise<void> {
           </button>
         </div>
 
-        <p v-if="dirNotice" class="mt-2 text-xs text-amber-300">{{ dirNotice }}</p>
+        <p v-if="dirNotice" class="mt-2 flex items-center gap-1.5 text-xs text-amber-300">
+          <StatusIcon kind="warning" />
+          {{ dirNotice }}
+        </p>
 
         <div class="mt-4">
           <div class="text-xs text-slate-500">最近目录</div>
@@ -209,7 +217,10 @@ async function startScan(): Promise<void> {
             </div>
           </div>
           <p v-else class="mt-2 text-xs text-slate-500">暂无最近目录</p>
-          <p v-if="recentError" class="mt-2 text-xs text-rose-300">{{ recentError }}</p>
+          <p v-if="recentError" class="mt-2 flex items-center gap-1.5 text-xs text-rose-300">
+            <StatusIcon kind="error" />
+            {{ recentError }}
+          </p>
         </div>
       </div>
 
@@ -230,7 +241,10 @@ async function startScan(): Promise<void> {
           />
           <span class="text-xs text-slate-500">允许 1–64</span>
         </div>
-        <p v-if="configError" class="mt-2 text-xs text-rose-300">{{ configError }}</p>
+        <p v-if="configError" class="mt-2 flex items-center gap-1.5 text-xs text-rose-300">
+          <StatusIcon kind="error" />
+          {{ configError }}
+        </p>
 
         <div class="mt-4 space-y-3">
           <label class="flex items-center gap-3 text-sm text-slate-300">
@@ -248,8 +262,9 @@ async function startScan(): Promise<void> {
         </div>
       </div>
 
-      <div v-if="running" class="mt-5 rounded-md border border-amber-400/40 bg-amber-400/10 px-4 py-3 text-sm text-amber-300">
-        当前有任务进行中。
+      <div v-if="running" class="mt-5 flex items-center gap-2 rounded-md border border-amber-400/40 bg-amber-400/10 px-4 py-3 text-sm text-amber-300">
+        <StatusIcon kind="loading" />
+        <span>当前有任务进行中。</span>
         <RouterLink to="/scan" class="underline">前往查看</RouterLink>
       </div>
 
@@ -262,7 +277,10 @@ async function startScan(): Promise<void> {
         >
           {{ starting ? '启动中…' : '开始扫描' }}
         </button>
-        <span v-if="startError" class="text-sm text-rose-300">{{ startError }}</span>
+        <span v-if="startError" class="flex items-center gap-1.5 text-sm text-rose-300">
+          <StatusIcon kind="error" />
+          {{ startError }}
+        </span>
       </div>
     </template>
   </section>

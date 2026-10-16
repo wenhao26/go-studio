@@ -14,6 +14,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import * as API from '../../wailsjs/go/app/API'
 import type { app } from '../../wailsjs/go/models'
+import StatusIcon from '../components/StatusIcon.vue'
 import { friendlyMessage } from '../lib/errors'
 import { formatCount, formatDuration, formatRate, formatSize } from '../lib/format'
 import { ensureTask, hasRunningTask, useTaskState } from '../lib/task'
@@ -228,10 +229,13 @@ onMounted(loadAll)
         v-if="confirming"
         class="mt-4 rounded-lg border border-indigo-400/40 bg-indigo-500/10 px-4 py-3 text-sm text-indigo-100"
       >
-        <p>
-          即将整理: 文件数量 <span class="font-semibold">{{ formatCount(organizableCount) }}</span>
-          · 目标目录 <span class="font-mono text-xs">&lt;扫描根&gt;/{{ ORGANIZE_DIR }}</span>
-          · 是否继续？
+        <p class="flex items-start gap-2">
+          <StatusIcon kind="info" />
+          <span class="min-w-0">
+            即将整理: 文件数量 <span class="font-semibold">{{ formatCount(organizableCount) }}</span>
+            · 目标目录 <span class="font-mono text-xs">&lt;扫描根&gt;/{{ ORGANIZE_DIR }}</span>
+            · 是否继续？
+          </span>
         </p>
         <p v-if="excludedCount > 0" class="mt-1 text-xs text-indigo-200/80">
           已排除 {{ formatCount(excludedCount) }} 个文件，不会被整理。
@@ -255,15 +259,25 @@ onMounted(loadAll)
           </button>
         </div>
       </div>
-      <p v-if="organizeError" class="mt-3 text-xs text-rose-300">{{ organizeError }}</p>
+      <p v-if="organizeError" class="mt-3 flex items-center gap-1.5 text-xs text-rose-300">
+        <StatusIcon kind="error" />
+        {{ organizeError }}
+      </p>
 
-      <p v-if="blocked" class="mt-4 rounded-md border border-amber-400/40 bg-amber-400/10 px-4 py-3 text-sm text-amber-300">
+      <p v-if="blocked" class="mt-4 flex items-center gap-2 rounded-md border border-amber-400/40 bg-amber-400/10 px-4 py-3 text-sm text-amber-300">
+        <StatusIcon kind="warning" />
         本次扫描未正常完成，部分结果不进入预览与整理。请重新扫描。
       </p>
 
-      <p v-if="loadError" class="mt-3 text-xs text-rose-300">{{ loadError }}</p>
+      <p v-if="loadError" class="mt-3 flex items-center gap-1.5 text-xs text-rose-300">
+        <StatusIcon kind="error" />
+        {{ loadError }}
+      </p>
 
-      <p v-if="loading" class="mt-3 text-xs text-slate-400">加载中…</p>
+      <p v-if="loading" class="mt-3 flex items-center gap-1.5 text-xs text-slate-400">
+        <StatusIcon kind="loading" />
+        加载中…
+      </p>
 
       <template v-if="!blocked && !loading">
         <!-- FR-5 扫描统计 -->
@@ -409,7 +423,10 @@ onMounted(loadAll)
           </div>
         </div>
 
-        <p v-if="rowError" class="mt-2 text-xs text-rose-300">{{ rowError }}</p>
+        <p v-if="rowError" class="mt-2 flex items-center gap-1.5 text-xs text-rose-300">
+          <StatusIcon kind="error" />
+          {{ rowError }}
+        </p>
       </template>
     </template>
   </section>

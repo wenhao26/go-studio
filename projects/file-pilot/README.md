@@ -57,6 +57,8 @@ projects/file-pilot/
 │   │   ├── router.ts            # 路由表（4 条路由，裁决 D-A5）
 │   │   ├── style.css            # Tailwind 入口
 │   │   ├── vite-env.d.ts
+│   │   ├── components/
+│   │   │   └── StatusIcon.vue   # 状态提示图标（成功/失败/警告/信息/进行中）
 │   │   ├── lib/                 # 前端工具与状态（无 UI）
 │   │   │   ├── task.ts          # 任务状态 + 事件桥接（task:status|progress|log）
 │   │   │   ├── errors.ts        # 哨兵错误 → 友好文案映射（contracts §4）

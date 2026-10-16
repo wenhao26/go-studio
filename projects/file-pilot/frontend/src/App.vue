@@ -5,6 +5,7 @@
 // 继续运行，并通过本指示器返回扫描页——因此无需导航拦截。
 import { computed } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
+import StatusIcon from './components/StatusIcon.vue'
 import { dismissRecoveryNotice, hasRunningTask, useRecoveryNotice } from './lib/task'
 
 const route = useRoute()
@@ -95,6 +96,7 @@ const navActiveClass = 'border-indigo-400 text-white'
       class="flex items-start gap-3 border-b border-amber-400/40 bg-amber-400/10 px-6 py-2.5 text-sm text-amber-200"
       role="status"
     >
+      <StatusIcon kind="warning" />
       <span class="min-w-0 flex-1">{{ recoveryText }}</span>
       <button
         type="button"

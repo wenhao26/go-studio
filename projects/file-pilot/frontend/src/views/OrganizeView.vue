@@ -15,6 +15,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import * as API from '../../wailsjs/go/app/API'
 import type { app } from '../../wailsjs/go/models'
+import StatusIcon from '../components/StatusIcon.vue'
 import { friendlyMessage } from '../lib/errors'
 import { formatCount, formatDuration, formatLogTime, formatSize } from '../lib/format'
 import { hasRunningTask, isTerminal, LOG_LIMIT, logKindLabel, statusLabel, useTaskState } from '../lib/task'
@@ -144,6 +145,21 @@ function reportTone(status: string): string {
       return 'border-slate-600 bg-slate-800/60 text-slate-300'
   }
 }
+
+// reportIcon 与 reportTone 同源：终态报告的状态图标
+// （completed→成功、canceled→警告、failed→失败）。
+const reportIcon = computed((): 'success' | 'warning' | 'error' | 'info' => {
+  switch (report.value?.status) {
+    case 'completed':
+      return 'success'
+    case 'canceled':
+      return 'warning'
+    case 'failed':
+      return 'error'
+    default:
+      return 'info'
+  }
+})
 </script>
 
 <template>
@@ -164,12 +180,16 @@ function reportTone(status: string): string {
         <RouterLink to="/results" class="shrink-0 text-sm text-indigo-300 hover:text-indigo-200">← 返回结果</RouterLink>
       </header>
 
-      <p v-if="actionError" class="mt-3 text-xs text-rose-300">{{ actionError }}</p>
+      <p v-if="actionError" class="mt-3 flex items-center gap-1.5 text-xs text-rose-300">
+        <StatusIcon kind="error" />
+        {{ actionError }}
+      </p>
 
       <!-- 运行中：确定型进度（可展示总数 / 百分比） + 日志 + 取消 -->
       <template v-if="organizing">
         <div class="mt-4 flex items-center justify-between">
-          <span class="rounded-full border border-slate-600 px-3 py-1 text-xs text-slate-300">
+          <span class="flex items-center gap-1.5 rounded-full border border-slate-600 px-3 py-1 text-xs text-slate-300">
+            <StatusIcon kind="loading" />
             {{ statusLabel(state.status) }} · {{ undoing ? '撤销中' : '整理中' }}
           </span>
           <button
@@ -229,7 +249,8 @@ function reportTone(status: string): string {
       <!-- 终态报告（FR-10） -->
       <template v-else-if="organizeTerminal">
         <template v-if="report">
-          <div class="mt-4 rounded-md border px-4 py-3 text-sm" :class="reportTone(report.status)">
+          <div class="mt-4 flex items-center gap-2 rounded-md border px-4 py-3 text-sm" :class="reportTone(report.status)">
+            <StatusIcon :kind="reportIcon" />
             <span>{{ actionLabel }}{{ report.status === 'completed' ? '完成' : report.status === 'canceled' ? '已取消（已完成部分保留）' : '失败' }}</span>
           </div>
 
@@ -291,7 +312,10 @@ function reportTone(status: string): string {
           </div>
 
           <div v-if="confirmingUndo" class="mt-3 rounded-md border border-amber-400/40 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
-            <p>将把本次整理移动的文件移回原位置；原位置若已被占用则跳过（绝不覆盖）。是否继续？</p>
+            <p class="flex items-start gap-2">
+              <StatusIcon kind="warning" />
+              <span class="min-w-0">将把本次整理移动的文件移回原位置；原位置若已被占用则跳过（绝不覆盖）。是否继续？</span>
+            </p>
             <div class="mt-2 flex items-center gap-3">
               <button type="button" class="rounded border border-amber-400/60 px-3 py-1 text-amber-100 hover:bg-amber-400/20 disabled:opacity-50" :disabled="submitting" @click="startUndo">
                 确认撤销
@@ -302,7 +326,10 @@ function reportTone(status: string): string {
             </div>
           </div>
         </template>
-        <p v-else class="mt-6 text-sm text-slate-400">正在加载报告…</p>
+        <p v-else class="mt-6 flex items-center gap-2 text-sm text-slate-400">
+          <StatusIcon kind="loading" />
+          正在加载报告…
+        </p>
       </template>
 
       <!-- 空闲：尚无进行中的整理任务（发起入口在 P3 结果页） -->

@@ -7,6 +7,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import * as API from '../../wailsjs/go/app/API'
+import StatusIcon from '../components/StatusIcon.vue'
 import { friendlyMessage } from '../lib/errors'
 import { formatCount, formatDuration, formatLogTime, formatRate } from '../lib/format'
 import { isTerminal, LOG_LIMIT, logKindLabel, reset, statusLabel, useTaskState } from '../lib/task'
@@ -54,6 +55,19 @@ const terminalTone = computed(() => {
       return 'border-rose-400/40 bg-rose-500/10 text-rose-300'
     default:
       return 'border-slate-600 bg-slate-800/60 text-slate-300'
+  }
+})
+
+// terminalIcon 与 terminalTone 同源：终态横幅的状态图标
+// （completed→成功、canceled→警告、failed→失败）。
+const terminalIcon = computed((): 'success' | 'warning' | 'error' => {
+  switch (state.status) {
+    case 'completed':
+      return 'success'
+    case 'canceled':
+      return 'warning'
+    default:
+      return 'error'
   }
 })
 
@@ -126,7 +140,10 @@ function scanAgain(): void {
           <p class="mt-1 truncate text-xs text-slate-400" :title="state.rootPath">{{ state.rootPath || '—' }}</p>
         </div>
         <div class="flex shrink-0 items-center gap-3">
-          <span class="rounded-full border border-slate-600 px-3 py-1 text-xs text-slate-300">{{ statusLabel(state.status) }}</span>
+          <span class="flex items-center gap-1.5 rounded-full border border-slate-600 px-3 py-1 text-xs text-slate-300">
+            <StatusIcon v-if="!terminal" kind="loading" />
+            {{ statusLabel(state.status) }}
+          </span>
           <button
             v-if="!terminal"
             type="button"
@@ -139,11 +156,17 @@ function scanAgain(): void {
         </div>
       </header>
 
-      <p v-if="cancelError" class="mt-3 text-xs text-rose-300">{{ cancelError }}</p>
+      <p v-if="cancelError" class="mt-3 flex items-center gap-1.5 text-xs text-rose-300">
+        <StatusIcon kind="error" />
+        {{ cancelError }}
+      </p>
 
       <!-- 终态横幅 -->
       <div v-if="terminal" class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border px-4 py-3 text-sm" :class="terminalTone">
-        <span>{{ terminalMessage() }}</span>
+        <span class="flex items-center gap-2">
+          <StatusIcon :kind="terminalIcon" />
+          {{ terminalMessage() }}
+        </span>
         <span class="flex items-center gap-3 text-xs opacity-80">
           <template v-if="showResults">
             <RouterLink to="/results" class="underline">查看分类结果</RouterLink>

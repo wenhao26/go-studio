@@ -4,13 +4,51 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 )
 
 // filesColumns 是读取列表时的显式列清单（AGENTS.md §22.2：不 SELECT *）。
 const filesColumns = `id, path, name, size_bytes, category, confidence, source, reason, excluded`
 
+// insertChunkRows 是单条 INSERT 语句写入的行数。
+//
+// 实测（196,707 行、500 行/事务、537MB 真实库、synchronous=FULL）：逐行 Exec 约
+// 1.91s，每条语句 10 行约 1.64s（-14%）；再增大行数反而退化（20 行 1.8s、50 行
+// 1.9s、100 行 2.5s），故取 10。事务边界仍由调用方决定（每 500 行调用一次本方法）。
+const insertChunkRows = 10
+
+// fileInsertArgsPerRow 是单行的绑定参数个数（excluded 是共享常量，不占参数）。
+const fileInsertArgsPerRow = 11
+
+// insertChunkSQL 返回一条写 n 行的 INSERT：占位符按行展开，excluded 恒为 0
+// （扫描写入的行永不排除；用户手动排除走 UpdateFilePlan）。
+func insertChunkSQL(n int) string {
+	const tuple = "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
+	tuples := make([]string, n)
+	for i := range tuples {
+		tuples[i] = tuple
+	}
+	return `INSERT INTO files (scan_id, path, name, ext, size_bytes, mtime, ctime, category, confidence, source, reason, excluded)
+VALUES ` + strings.Join(tuples, ", ")
+}
+
+// appendFileArgs 按列顺序把 rows 的绑定参数追加到 dst（HasCtime=false 写 NULL）。
+func appendFileArgs(dst []any, scanID int64, rows []FileRecord) []any {
+	for i := range rows {
+		row := &rows[i]
+		var ctime any
+		if row.HasCtime {
+			ctime = row.CtimeMS
+		}
+		dst = append(dst, scanID, row.Path, row.Name, row.Ext, row.SizeBytes, row.MtimeMS, ctime,
+			row.Category, row.Confidence, row.Source, row.Reason)
+	}
+	return dst
+}
+
 // InsertFiles 批量写入 files 行，整体一个事务（requirements §七：每 500 条一个事务）。
 //
+// 语句粒度是每 insertChunkRows 行一条多行 VALUES，尾部不足一块的行用等长语句一次写完。
 // 空批是 no-op；scanID 必须有效（外键引用 scans.id）。
 // 本方法是 scanner.FileSink 的结构化实现：签名匹配即实现，无需 import scanner。
 func (s *Store) InsertFiles(ctx context.Context, scanID int64, rows []FileRecord) error {
@@ -28,25 +66,35 @@ func (s *Store) InsertFiles(ctx context.Context, scanID int64, rows []FileRecord
 	// commit 成功后 Rollback 返回 sql.ErrTxDone，属预期路径；见 applyMigration 同款说明。
 	defer func() { _ = tx.Rollback() }()
 
-	stmt, err := tx.PrepareContext(ctx, `
-INSERT INTO files (scan_id, path, name, ext, size_bytes, mtime, ctime, category, confidence, source, reason, excluded)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`)
+	stmt, err := tx.PrepareContext(ctx, insertChunkSQL(insertChunkRows))
 	if err != nil {
 		return fmt.Errorf("prepare insert files: %w", err)
 	}
 	// Stmt 由 tx 管理生命周期；显式 Close 让失败路径尽早释放语句句柄。
 	defer stmt.Close()
 
-	for i := range rows {
-		row := &rows[i]
-		var ctime any
-		if row.HasCtime {
-			ctime = row.CtimeMS
+	// 尾部不足一块的行数单独准备一条等长语句：只有扫描的最后一个批次会走到这里。
+	full := len(rows) - len(rows)%insertChunkRows
+	var tail *sql.Stmt
+	if full < len(rows) {
+		tail, err = tx.PrepareContext(ctx, insertChunkSQL(len(rows)-full))
+		if err != nil {
+			return fmt.Errorf("prepare insert files tail: %w", err)
 		}
-		if _, err := stmt.ExecContext(ctx,
-			scanID, row.Path, row.Name, row.Ext, row.SizeBytes, row.MtimeMS, ctime,
-			row.Category, row.Confidence, row.Source, row.Reason); err != nil {
-			return fmt.Errorf("insert file row %q: %w", row.Path, err)
+		defer tail.Close()
+	}
+
+	args := make([]any, 0, fileInsertArgsPerRow*insertChunkRows)
+	for start := 0; start < full; start += insertChunkRows {
+		args = appendFileArgs(args[:0], scanID, rows[start:start+insertChunkRows])
+		if _, err := stmt.ExecContext(ctx, args...); err != nil {
+			return fmt.Errorf("insert files starting at row %q: %w", rows[start].Path, err)
+		}
+	}
+	if full < len(rows) {
+		args = appendFileArgs(args[:0], scanID, rows[full:])
+		if _, err := tail.ExecContext(ctx, args...); err != nil {
+			return fmt.Errorf("insert files starting at row %q: %w", rows[full].Path, err)
 		}
 	}
 

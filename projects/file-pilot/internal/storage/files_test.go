@@ -70,6 +70,52 @@ func TestInsertFiles_Batch(t *testing.T) {
 	}
 }
 
+// TestInsertFiles_ChunkedBatch 覆盖多行 VALUES 分块路径：25 行 = 两块满行（10+10）
+// + 尾部 5 行，要求全部落库且顺序、字段（含 ctime NULL 语义）与输入一致。
+func TestInsertFiles_ChunkedBatch(t *testing.T) {
+	store := openTestStore(t)
+	ctx := context.Background()
+	scanID := insertTestScan(t, store)
+
+	rows := make([]FileRecord, 0, 25)
+	for i := 0; i < 25; i++ {
+		rows = append(rows, FileRecord{
+			Path: fmt.Sprintf(`C:\data\f%02d.txt`, i), Name: fmt.Sprintf("f%02d.txt", i),
+			Ext: "txt", SizeBytes: int64(i), MtimeMS: 1000 + int64(i),
+			CtimeMS: 2000 + int64(i), HasCtime: i%2 == 0,
+			Category: "文档", Confidence: 60, Source: "rule", Reason: "扩展名 txt",
+		})
+	}
+	if err := store.InsertFiles(ctx, scanID, rows); err != nil {
+		t.Fatalf("InsertFiles: %v", err)
+	}
+
+	items, total, err := store.ListFiles(ctx, scanID, "", 30, 0)
+	if err != nil {
+		t.Fatalf("ListFiles: %v", err)
+	}
+	if total != 25 || len(items) != 25 {
+		t.Fatalf("total=%d len=%d, want 25/25", total, len(items))
+	}
+	for i, it := range items {
+		wantName := fmt.Sprintf("f%02d.txt", i)
+		if it.Name != wantName || it.SizeBytes != int64(i) || it.Category != "文档" {
+			t.Fatalf("items[%d] = %s/%d/%s, want %s/%d/文档", i, it.Name, it.SizeBytes, it.Category, wantName, i)
+		}
+	}
+
+	var nulls, values int
+	if err := store.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM files WHERE ctime IS NULL`).Scan(&nulls); err != nil {
+		t.Fatalf("count null ctime: %v", err)
+	}
+	if err := store.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM files WHERE ctime IS NOT NULL`).Scan(&values); err != nil {
+		t.Fatalf("count value ctime: %v", err)
+	}
+	if nulls != 12 || values != 13 {
+		t.Fatalf("ctime null=%d value=%d, want 12/13", nulls, values)
+	}
+}
+
 func TestInsertFiles_EmptyBatchIsNoop(t *testing.T) {
 	store := openTestStore(t)
 	if err := store.InsertFiles(context.Background(), 1, nil); err != nil {

@@ -48,13 +48,13 @@ function terminalMessage(): string {
 const terminalTone = computed(() => {
   switch (state.status) {
     case 'completed':
-      return 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300'
+      return 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-400/40 dark:bg-emerald-400/10 dark:text-emerald-300'
     case 'canceled':
-      return 'border-amber-400/40 bg-amber-400/10 text-amber-300'
+      return 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-400/40 dark:bg-amber-400/10 dark:text-amber-300'
     case 'failed':
-      return 'border-rose-400/40 bg-rose-500/10 text-rose-300'
+      return 'border-rose-300 bg-rose-50 text-rose-600 dark:border-rose-400/40 dark:bg-rose-500/10 dark:text-rose-300'
     default:
-      return 'border-slate-600 bg-slate-800/60 text-slate-300'
+      return 'border-slate-200 bg-white text-slate-600 dark:border-slate-600 dark:bg-slate-800/60 dark:text-slate-300'
   }
 })
 
@@ -128,26 +128,33 @@ function scanAgain(): void {
   <section class="mx-auto flex h-full max-w-4xl flex-col px-6 py-6">
     <!-- 空态：无进行中任务 -->
     <div v-if="!hasTask" class="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-      <h2 class="text-xl font-semibold text-slate-200">当前没有进行中的扫描任务</h2>
-      <p class="text-sm text-slate-400">请在首页选择目录并开始扫描。</p>
-      <RouterLink to="/" class="mt-1 text-sm text-indigo-300 hover:text-indigo-200">← 返回首页</RouterLink>
+      <h2 class="text-xl font-semibold text-slate-800 dark:text-slate-200">当前没有进行中的扫描任务</h2>
+      <p class="text-sm text-slate-500 dark:text-slate-400">请在首页选择目录并开始扫描。</p>
+      <RouterLink to="/" class="mt-1 text-sm text-indigo-600 hover:text-indigo-500 dark:text-indigo-300 dark:hover:text-indigo-200">← 返回首页</RouterLink>
     </div>
 
     <template v-else>
       <header class="flex items-start justify-between gap-4">
         <div class="min-w-0">
-          <h1 class="text-xl font-semibold text-slate-100">扫描中</h1>
-          <p class="mt-1 truncate text-xs text-slate-400" :title="state.rootPath">{{ state.rootPath || '—' }}</p>
+          <h1 class="text-xl font-semibold text-slate-900 dark:text-slate-100">扫描中</h1>
+          <!-- 目录说明：路径本身不自明，前面补「目录：」标签与文件夹图标 -->
+          <p class="mt-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-3.5 w-3.5 shrink-0" aria-hidden="true">
+              <path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
+            </svg>
+            <span class="shrink-0">目录：</span>
+            <span class="min-w-0 truncate" :title="state.rootPath">{{ state.rootPath || '—' }}</span>
+          </p>
         </div>
         <div class="flex shrink-0 items-center gap-3">
-          <span class="flex items-center gap-1.5 rounded-full border border-slate-600 px-3 py-1 text-xs text-slate-300">
+          <span class="flex items-center gap-1.5 rounded-full border border-slate-300 px-3 py-1 text-xs text-slate-700 dark:border-slate-600 dark:text-slate-300">
             <StatusIcon v-if="!terminal" kind="loading" />
             {{ statusLabel(state.status) }}
           </span>
           <button
             v-if="!terminal"
             type="button"
-            class="rounded-md border border-rose-400/50 bg-rose-500/10 px-4 py-1.5 text-sm text-rose-300 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+            class="rounded-md border border-rose-300 bg-rose-50 px-4 py-1.5 text-sm text-rose-600 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-400/50 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20"
             :disabled="canceling"
             @click="cancelScan"
           >
@@ -156,7 +163,7 @@ function scanAgain(): void {
         </div>
       </header>
 
-      <p v-if="cancelError" class="mt-3 flex items-center gap-1.5 text-xs text-rose-300">
+      <p v-if="cancelError" class="mt-3 flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-300">
         <StatusIcon kind="error" />
         {{ cancelError }}
       </p>
@@ -179,42 +186,42 @@ function scanAgain(): void {
 
       <!-- 不确定型进度（无总数 / 百分比 / ETA） -->
       <dl v-if="showProgress" class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div class="rounded-lg border border-slate-700/60 bg-slate-800/40 px-4 py-3">
-          <dt class="text-xs text-slate-500">已扫描文件</dt>
-          <dd class="mt-1 text-lg font-semibold text-slate-100">{{ formatCount(scanned) }}</dd>
+        <div class="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40 dark:shadow-none">
+          <dt class="text-xs text-slate-400 dark:text-slate-500">已扫描文件</dt>
+          <dd class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">{{ formatCount(scanned) }}</dd>
         </div>
-        <div class="rounded-lg border border-slate-700/60 bg-slate-800/40 px-4 py-3">
-          <dt class="text-xs text-slate-500">扫描速率</dt>
-          <dd class="mt-1 text-lg font-semibold text-slate-100">{{ formatRate(rate) }} <span class="text-xs font-normal text-slate-400">文件/秒</span></dd>
+        <div class="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40 dark:shadow-none">
+          <dt class="text-xs text-slate-400 dark:text-slate-500">扫描速率</dt>
+          <dd class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">{{ formatRate(rate) }} <span class="text-xs font-normal text-slate-500 dark:text-slate-400">文件/秒</span></dd>
         </div>
-        <div class="rounded-lg border border-slate-700/60 bg-slate-800/40 px-4 py-3">
-          <dt class="text-xs text-slate-500">已耗时</dt>
-          <dd class="mt-1 text-lg font-semibold text-slate-100">{{ formatDuration(elapsedMs) }}</dd>
+        <div class="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40 dark:shadow-none">
+          <dt class="text-xs text-slate-400 dark:text-slate-500">已耗时</dt>
+          <dd class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">{{ formatDuration(elapsedMs) }}</dd>
         </div>
-        <div class="rounded-lg border border-slate-700/60 bg-slate-800/40 px-4 py-3">
-          <dt class="text-xs text-slate-500">跳过</dt>
-          <dd class="mt-1 text-lg font-semibold text-slate-100">{{ formatCount(skipped) }}</dd>
+        <div class="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40 dark:shadow-none">
+          <dt class="text-xs text-slate-400 dark:text-slate-500">跳过</dt>
+          <dd class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">{{ formatCount(skipped) }}</dd>
         </div>
-        <div class="col-span-2 rounded-lg border border-slate-700/60 bg-slate-800/40 px-4 py-3 sm:col-span-4">
-          <dt class="text-xs text-slate-500">当前目录</dt>
-          <dd class="mt-1 truncate text-sm text-slate-200" :title="currentDir">{{ currentDir || '—' }}</dd>
+        <div class="col-span-2 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm sm:col-span-4 dark:border-slate-700/60 dark:bg-slate-800/40 dark:shadow-none">
+          <dt class="text-xs text-slate-400 dark:text-slate-500">当前目录</dt>
+          <dd class="mt-1 truncate text-sm text-slate-800 dark:text-slate-200" :title="currentDir">{{ currentDir || '—' }}</dd>
         </div>
       </dl>
 
       <!-- 三类日志流（环形缓冲上限 500 行） -->
-      <div class="mt-4 flex min-h-0 flex-1 flex-col rounded-lg border border-slate-700/60 bg-slate-950/60">
-        <div class="flex items-center justify-between border-b border-slate-700/60 px-4 py-2">
-          <span class="text-xs font-medium text-slate-400">日志</span>
-          <span class="text-xs text-slate-500">上限 {{ LOG_LIMIT }} 行</span>
+      <div class="mt-4 flex min-h-0 flex-1 flex-col rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700/60 dark:bg-slate-950/60">
+        <div class="flex items-center justify-between border-b border-slate-200 px-4 py-2 dark:border-slate-700/60">
+          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">日志</span>
+          <span class="text-xs text-slate-400 dark:text-slate-500">上限 {{ LOG_LIMIT }} 行</span>
         </div>
         <div ref="logEl" class="min-h-0 flex-1 overflow-y-auto px-4 py-2 font-mono text-xs leading-relaxed" @scroll="onLogScroll">
-          <p v-if="!state.logs.length" class="py-4 text-center text-slate-500">暂无日志</p>
+          <p v-if="!state.logs.length" class="py-4 text-center text-slate-400 dark:text-slate-500">暂无日志</p>
           <div v-for="entry in state.logs" :key="entry.id" class="flex gap-3 py-0.5">
-            <span class="shrink-0 tabular-nums text-slate-500">{{ formatLogTime(entry.ts) }}</span>
-            <span class="shrink-0 rounded px-1.5 text-[10px] leading-5" :class="entry.kind === 'system' ? 'bg-slate-700 text-slate-200' : entry.kind === 'classify' ? 'bg-indigo-500/20 text-indigo-300' : 'bg-slate-700/50 text-slate-400'">
+            <span class="shrink-0 tabular-nums text-slate-400 dark:text-slate-500">{{ formatLogTime(entry.ts) }}</span>
+            <span class="shrink-0 rounded px-1.5 text-[10px] leading-5" :class="entry.kind === 'system' ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200' : entry.kind === 'classify' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400'">
               {{ logKindLabel(entry.kind) }}
             </span>
-            <span class="min-w-0 whitespace-pre-wrap break-all text-slate-300">{{ entry.text }}</span>
+            <span class="min-w-0 whitespace-pre-wrap break-all text-slate-700 dark:text-slate-300">{{ entry.text }}</span>
           </div>
         </div>
       </div>

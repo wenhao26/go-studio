@@ -18,6 +18,8 @@ import (
 	"github.com/wenhao26/go-studio/projects/file-pilot/internal/storage"
 )
 
+// assets 内嵌前端构建产物（frontend/dist），由 Wails assetserver 直接服务。
+//
 //go:embed all:frontend/dist
 var assets embed.FS
 
@@ -52,7 +54,9 @@ func run() error {
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
-		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
+		// 窗口加载前的底色：与浅色主题根渐变顶色（slate-50 #f8fafc）一致（默认主题）；
+		// 深色由前端首帧前内联脚本切换（见 frontend/index.html），避免异色闪屏。
+		BackgroundColour: &options.RGBA{R: 248, G: 250, B: 252, A: 1},
 		OnStartup:        application.Startup,
 		OnShutdown:       application.Shutdown,
 		// 只绑定契约方法面：App 的生命周期与事件出口方法不得暴露给前端（contracts §5）。

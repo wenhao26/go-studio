@@ -18,6 +18,7 @@ const (
 
 // 事件载荷：跨 Wails 边界一律 snake_case（contracts §1）。
 
+// statusPayload 是 task:status 的载荷：任务身份、当前状态与关联扫描。
 type statusPayload struct {
 	TaskID int64  `json:"task_id"`
 	Type   string `json:"type"`
@@ -26,6 +27,8 @@ type statusPayload struct {
 	Error  string `json:"error"`
 }
 
+// progressPayload 是 task:progress 的载荷：扫描与整理两分支字段同结构发送
+// （未用分支为零值，前端按任务类型取舍展示）。
 type progressPayload struct {
 	TaskID    int64 `json:"task_id"`
 	ElapsedMS int64 `json:"elapsed_ms"`
@@ -44,6 +47,7 @@ type progressPayload struct {
 	TargetCategory string `json:"target_category"`
 }
 
+// logPayload 是 task:log 的批量载荷：一次窗口冲刷的全部日志条目。
 type logPayload struct {
 	TaskID  int64              `json:"task_id"`
 	Entries []scanner.LogEntry `json:"entries"`

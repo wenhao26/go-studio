@@ -136,13 +136,13 @@ watch(
 function reportTone(status: string): string {
   switch (status) {
     case 'completed':
-      return 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300'
+      return 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-400/40 dark:bg-emerald-400/10 dark:text-emerald-300'
     case 'canceled':
-      return 'border-amber-400/40 bg-amber-400/10 text-amber-300'
+      return 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-400/40 dark:bg-amber-400/10 dark:text-amber-300'
     case 'failed':
-      return 'border-rose-400/40 bg-rose-500/10 text-rose-300'
+      return 'border-rose-300 bg-rose-50 text-rose-600 dark:border-rose-400/40 dark:bg-rose-500/10 dark:text-rose-300'
     default:
-      return 'border-slate-600 bg-slate-800/60 text-slate-300'
+      return 'border-slate-200 bg-white text-slate-600 dark:border-slate-600 dark:bg-slate-800/60 dark:text-slate-300'
   }
 }
 
@@ -166,21 +166,28 @@ const reportIcon = computed((): 'success' | 'warning' | 'error' | 'info' => {
   <section class="mx-auto flex h-full max-w-4xl flex-col px-6 py-6">
     <!-- 空态：无 scanID（未扫描或刷新后无历史入口） -->
     <div v-if="!hasScan" class="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-      <h2 class="text-xl font-semibold text-slate-200">暂无可整理的内容</h2>
-      <p class="text-sm text-slate-400">请先在首页选择目录并完成一次扫描。</p>
-      <RouterLink to="/" class="mt-1 text-sm text-indigo-300 hover:text-indigo-200">← 返回首页</RouterLink>
+      <h2 class="text-xl font-semibold text-slate-800 dark:text-slate-200">暂无可整理的内容</h2>
+      <p class="text-sm text-slate-500 dark:text-slate-400">请先在首页选择目录并完成一次扫描。</p>
+      <RouterLink to="/" class="mt-1 text-sm text-indigo-600 hover:text-indigo-500 dark:text-indigo-300 dark:hover:text-indigo-200">← 返回首页</RouterLink>
     </div>
 
     <template v-else>
       <header class="flex items-start justify-between gap-4">
         <div class="min-w-0">
-          <h1 class="text-xl font-semibold text-slate-100">整理与撤销</h1>
-          <p class="mt-1 truncate text-xs text-slate-400" :title="state.rootPath">{{ state.rootPath || '—' }}</p>
+          <h1 class="text-xl font-semibold text-slate-900 dark:text-slate-100">整理与撤销</h1>
+          <!-- 目录说明：路径本身不自明，前面补「目录：」标签与文件夹图标 -->
+          <p class="mt-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-3.5 w-3.5 shrink-0" aria-hidden="true">
+              <path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
+            </svg>
+            <span class="shrink-0">目录：</span>
+            <span class="min-w-0 truncate" :title="state.rootPath">{{ state.rootPath || '—' }}</span>
+          </p>
         </div>
-        <RouterLink to="/results" class="shrink-0 text-sm text-indigo-300 hover:text-indigo-200">← 返回结果</RouterLink>
+        <RouterLink to="/results" class="shrink-0 text-sm text-indigo-600 hover:text-indigo-500 dark:text-indigo-300 dark:hover:text-indigo-200">← 返回结果</RouterLink>
       </header>
 
-      <p v-if="actionError" class="mt-3 flex items-center gap-1.5 text-xs text-rose-300">
+      <p v-if="actionError" class="mt-3 flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-300">
         <StatusIcon kind="error" />
         {{ actionError }}
       </p>
@@ -188,13 +195,13 @@ const reportIcon = computed((): 'success' | 'warning' | 'error' | 'info' => {
       <!-- 运行中：确定型进度（可展示总数 / 百分比） + 日志 + 取消 -->
       <template v-if="organizing">
         <div class="mt-4 flex items-center justify-between">
-          <span class="flex items-center gap-1.5 rounded-full border border-slate-600 px-3 py-1 text-xs text-slate-300">
+          <span class="flex items-center gap-1.5 rounded-full border border-slate-300 px-3 py-1 text-xs text-slate-700 dark:border-slate-600 dark:text-slate-300">
             <StatusIcon kind="loading" />
             {{ statusLabel(state.status) }} · {{ undoing ? '撤销中' : '整理中' }}
           </span>
           <button
             type="button"
-            class="rounded-md border border-rose-400/50 bg-rose-500/10 px-4 py-1.5 text-sm text-rose-300 hover:bg-rose-500/20"
+            class="rounded-md border border-rose-300 bg-rose-50 px-4 py-1.5 text-sm text-rose-600 hover:bg-rose-100 dark:border-rose-400/50 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20"
             @click="cancelTask"
           >
             取消
@@ -202,45 +209,45 @@ const reportIcon = computed((): 'success' | 'warning' | 'error' | 'info' => {
         </div>
 
         <dl class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div class="rounded-lg border border-slate-700/60 bg-slate-800/40 px-4 py-3">
-            <dt class="text-xs text-slate-500">已处理</dt>
-            <dd class="mt-1 text-lg font-semibold text-slate-100">{{ formatCount(done) }} / {{ formatCount(total) }}</dd>
+          <div class="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40 dark:shadow-none">
+            <dt class="text-xs text-slate-400 dark:text-slate-500">已处理</dt>
+            <dd class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">{{ formatCount(done) }} / {{ formatCount(total) }}</dd>
           </div>
-          <div class="rounded-lg border border-slate-700/60 bg-slate-800/40 px-4 py-3">
-            <dt class="text-xs text-slate-500">进度</dt>
-            <dd class="mt-1 text-lg font-semibold text-slate-100">{{ percent }}%</dd>
+          <div class="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40 dark:shadow-none">
+            <dt class="text-xs text-slate-400 dark:text-slate-500">进度</dt>
+            <dd class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">{{ percent }}%</dd>
           </div>
-          <div class="rounded-lg border border-slate-700/60 bg-slate-800/40 px-4 py-3">
-            <dt class="text-xs text-slate-500">已耗时</dt>
-            <dd class="mt-1 text-lg font-semibold text-slate-100">{{ formatDuration(state.progress?.elapsed_ms ?? 0) }}</dd>
+          <div class="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40 dark:shadow-none">
+            <dt class="text-xs text-slate-400 dark:text-slate-500">已耗时</dt>
+            <dd class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">{{ formatDuration(state.progress?.elapsed_ms ?? 0) }}</dd>
           </div>
-          <div class="rounded-lg border border-slate-700/60 bg-slate-800/40 px-4 py-3">
-            <dt class="text-xs text-slate-500">目标类别</dt>
-            <dd class="mt-1 text-lg font-semibold text-slate-100">{{ targetCategory || '—' }}</dd>
+          <div class="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40 dark:shadow-none">
+            <dt class="text-xs text-slate-400 dark:text-slate-500">目标类别</dt>
+            <dd class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">{{ targetCategory || '—' }}</dd>
           </div>
-          <div class="col-span-2 rounded-lg border border-slate-700/60 bg-slate-800/40 px-4 py-3 sm:col-span-4">
-            <dt class="text-xs text-slate-500">当前文件</dt>
-            <dd class="mt-1 truncate text-sm text-slate-200" :title="currentFile">{{ currentFile || '—' }}</dd>
+          <div class="col-span-2 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm sm:col-span-4 dark:border-slate-700/60 dark:bg-slate-800/40 dark:shadow-none">
+            <dt class="text-xs text-slate-400 dark:text-slate-500">当前文件</dt>
+            <dd class="mt-1 truncate text-sm text-slate-800 dark:text-slate-200" :title="currentFile">{{ currentFile || '—' }}</dd>
           </div>
         </dl>
 
-        <div class="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-800">
-          <div class="h-full rounded-full bg-indigo-500 transition-all" :style="{ width: percent + '%' }" />
+        <div class="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+          <div class="h-full rounded-full bg-indigo-600 transition-all dark:bg-indigo-500" :style="{ width: percent + '%' }" />
         </div>
 
-        <div class="mt-4 flex min-h-0 flex-1 flex-col rounded-lg border border-slate-700/60 bg-slate-950/60">
-          <div class="flex items-center justify-between border-b border-slate-700/60 px-4 py-2">
-            <span class="text-xs font-medium text-slate-400">日志</span>
-            <span class="text-xs text-slate-500">上限 {{ LOG_LIMIT }} 行</span>
+        <div class="mt-4 flex min-h-0 flex-1 flex-col rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700/60 dark:bg-slate-950/60">
+          <div class="flex items-center justify-between border-b border-slate-200 px-4 py-2 dark:border-slate-700/60">
+            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">日志</span>
+            <span class="text-xs text-slate-400 dark:text-slate-500">上限 {{ LOG_LIMIT }} 行</span>
           </div>
           <div ref="logEl" class="min-h-0 flex-1 overflow-y-auto px-4 py-2 font-mono text-xs leading-relaxed" @scroll="onLogScroll">
-            <p v-if="!state.logs.length" class="py-4 text-center text-slate-500">暂无日志</p>
+            <p v-if="!state.logs.length" class="py-4 text-center text-slate-400 dark:text-slate-500">暂无日志</p>
             <div v-for="entry in state.logs" :key="entry.id" class="flex gap-3 py-0.5">
-              <span class="shrink-0 tabular-nums text-slate-500">{{ formatLogTime(entry.ts) }}</span>
-              <span class="shrink-0 rounded px-1.5 text-[10px] leading-5" :class="entry.kind === 'system' ? 'bg-slate-700 text-slate-200' : 'bg-slate-700/50 text-slate-400'">
+              <span class="shrink-0 tabular-nums text-slate-400 dark:text-slate-500">{{ formatLogTime(entry.ts) }}</span>
+              <span class="shrink-0 rounded px-1.5 text-[10px] leading-5" :class="entry.kind === 'system' ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200' : 'bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400'">
                 {{ logKindLabel(entry.kind) }}
               </span>
-              <span class="min-w-0 whitespace-pre-wrap break-all text-slate-300">{{ entry.text }}</span>
+              <span class="min-w-0 whitespace-pre-wrap break-all text-slate-700 dark:text-slate-300">{{ entry.text }}</span>
             </div>
           </div>
         </div>
@@ -255,43 +262,43 @@ const reportIcon = computed((): 'success' | 'warning' | 'error' | 'info' => {
           </div>
 
           <dl class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div class="rounded-lg border border-slate-700/60 bg-slate-800/40 px-4 py-3">
-              <dt class="text-xs text-slate-500">成功</dt>
-              <dd class="mt-1 text-lg font-semibold text-emerald-300">{{ formatCount(report.success_count) }}</dd>
+            <div class="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40 dark:shadow-none">
+              <dt class="text-xs text-slate-400 dark:text-slate-500">成功</dt>
+              <dd class="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-300">{{ formatCount(report.success_count) }}</dd>
             </div>
-            <div class="rounded-lg border border-slate-700/60 bg-slate-800/40 px-4 py-3">
-              <dt class="text-xs text-slate-500">失败</dt>
-              <dd class="mt-1 text-lg font-semibold" :class="report.failed_count > 0 ? 'text-rose-300' : 'text-slate-100'">{{ formatCount(report.failed_count) }}</dd>
+            <div class="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40 dark:shadow-none">
+              <dt class="text-xs text-slate-400 dark:text-slate-500">失败</dt>
+              <dd class="mt-1 text-lg font-semibold" :class="report.failed_count > 0 ? 'text-rose-600 dark:text-rose-300' : 'text-slate-900 dark:text-slate-100'">{{ formatCount(report.failed_count) }}</dd>
             </div>
-            <div class="rounded-lg border border-slate-700/60 bg-slate-800/40 px-4 py-3">
-              <dt class="text-xs text-slate-500">{{ lastAction === 'undo' ? '已回移数据量' : '已移动数据量' }}</dt>
-              <dd class="mt-1 text-lg font-semibold text-slate-100">{{ formatSize(report.moved_size_bytes) }}</dd>
+            <div class="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40 dark:shadow-none">
+              <dt class="text-xs text-slate-400 dark:text-slate-500">{{ lastAction === 'undo' ? '已回移数据量' : '已移动数据量' }}</dt>
+              <dd class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">{{ formatSize(report.moved_size_bytes) }}</dd>
             </div>
-            <div class="rounded-lg border border-slate-700/60 bg-slate-800/40 px-4 py-3">
-              <dt class="text-xs text-slate-500">耗时</dt>
-              <dd class="mt-1 text-lg font-semibold text-slate-100">{{ formatDuration(report.duration_ms) }}</dd>
+            <div class="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40 dark:shadow-none">
+              <dt class="text-xs text-slate-400 dark:text-slate-500">耗时</dt>
+              <dd class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">{{ formatDuration(report.duration_ms) }}</dd>
             </div>
           </dl>
 
           <!-- 失败明细 -->
-          <div v-if="report.failures.length" class="mt-4 flex min-h-0 flex-1 flex-col rounded-lg border border-slate-700/60 bg-slate-950/40">
-            <div class="border-b border-slate-700/60 px-4 py-2 text-xs font-medium text-slate-400">
+          <div v-if="report.failures.length" class="mt-4 flex min-h-0 flex-1 flex-col rounded-lg border border-slate-200 bg-white dark:border-slate-700/60 dark:bg-slate-950/40">
+            <div class="border-b border-slate-200 px-4 py-2 text-xs font-medium text-slate-500 dark:border-slate-700/60 dark:text-slate-400">
               失败明细 · {{ formatCount(report.failures.length) }} 项
             </div>
             <div class="min-h-0 flex-1 overflow-auto">
               <table class="w-full border-collapse text-left text-xs">
-                <thead class="sticky top-0 bg-slate-900/95 text-slate-400">
+                <thead class="sticky top-0 bg-slate-50 text-slate-500 dark:bg-slate-900/95 dark:text-slate-400">
                   <tr>
                     <th class="px-4 py-2 font-medium">文件</th>
                     <th class="px-4 py-2 font-medium">原因</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(f, i) in report.failures" :key="i" class="border-t border-slate-800">
+                  <tr v-for="(f, i) in report.failures" :key="i" class="border-t border-slate-100 dark:border-slate-800">
                     <td class="max-w-md px-4 py-2">
-                      <p class="truncate text-slate-200" :title="f.path">{{ f.path }}</p>
+                      <p class="truncate text-slate-800 dark:text-slate-200" :title="f.path">{{ f.path }}</p>
                     </td>
-                    <td class="px-4 py-2 text-rose-300">{{ f.reason }}</td>
+                    <td class="px-4 py-2 text-rose-600 dark:text-rose-300">{{ f.reason }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -303,30 +310,30 @@ const reportIcon = computed((): 'success' | 'warning' | 'error' | 'info' => {
             <button
               v-if="canUndo && !confirmingUndo"
               type="button"
-              class="rounded-md border border-amber-400/50 bg-amber-500/10 px-4 py-1.5 text-sm text-amber-200 hover:bg-amber-500/20"
+              class="rounded-md border border-amber-300 bg-amber-50 px-4 py-1.5 text-sm text-amber-800 hover:bg-amber-100 dark:border-amber-400/50 dark:bg-amber-500/10 dark:text-amber-200 dark:hover:bg-amber-500/20"
               @click="confirmingUndo = true"
             >
               撤销本次整理
             </button>
-            <RouterLink to="/results" class="text-sm text-indigo-300 hover:text-indigo-200">查看结果</RouterLink>
+            <RouterLink to="/results" class="text-sm text-indigo-600 hover:text-indigo-500 dark:text-indigo-300 dark:hover:text-indigo-200">查看结果</RouterLink>
           </div>
 
-          <div v-if="confirmingUndo" class="mt-3 rounded-md border border-amber-400/40 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
+          <div v-if="confirmingUndo" class="mt-3 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-400/40 dark:bg-amber-400/10 dark:text-amber-200">
             <p class="flex items-start gap-2">
               <StatusIcon kind="warning" />
               <span class="min-w-0">将把本次整理移动的文件移回原位置；原位置若已被占用则跳过（绝不覆盖）。是否继续？</span>
             </p>
             <div class="mt-2 flex items-center gap-3">
-              <button type="button" class="rounded border border-amber-400/60 px-3 py-1 text-amber-100 hover:bg-amber-400/20 disabled:opacity-50" :disabled="submitting" @click="startUndo">
+              <button type="button" class="rounded border border-amber-300 px-3 py-1 text-amber-800 hover:bg-amber-100 disabled:opacity-50 dark:border-amber-400/60 dark:text-amber-100 dark:hover:bg-amber-400/20" :disabled="submitting" @click="startUndo">
                 确认撤销
               </button>
-              <button type="button" class="rounded border border-slate-600 px-3 py-1 text-slate-300 hover:bg-slate-700/50" @click="confirmingUndo = false">
+              <button type="button" class="rounded border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700/50" @click="confirmingUndo = false">
                 取消
               </button>
             </div>
           </div>
         </template>
-        <p v-else class="mt-6 flex items-center gap-2 text-sm text-slate-400">
+        <p v-else class="mt-6 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
           <StatusIcon kind="loading" />
           正在加载报告…
         </p>
@@ -335,9 +342,9 @@ const reportIcon = computed((): 'success' | 'warning' | 'error' | 'info' => {
       <!-- 空闲：尚无进行中的整理任务（发起入口在 P3 结果页） -->
       <template v-else>
         <div class="mt-6 flex flex-1 flex-col items-center justify-center gap-3 text-center">
-          <h2 class="text-lg font-semibold text-slate-200">尚无进行中的整理任务</h2>
-          <p class="text-sm text-slate-400">请在「扫描结果」页点击「开始整理」，确认后自动跳转到本页展示进度与报告。</p>
-          <RouterLink to="/results" class="mt-1 text-sm text-indigo-300 hover:text-indigo-200">← 前往扫描结果</RouterLink>
+          <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-200">尚无进行中的整理任务</h2>
+          <p class="text-sm text-slate-500 dark:text-slate-400">请在「扫描结果」页点击「开始整理」，确认后自动跳转到本页展示进度与报告。</p>
+          <RouterLink to="/results" class="mt-1 text-sm text-indigo-600 hover:text-indigo-500 dark:text-indigo-300 dark:hover:text-indigo-200">← 前往扫描结果</RouterLink>
         </div>
       </template>
     </template>

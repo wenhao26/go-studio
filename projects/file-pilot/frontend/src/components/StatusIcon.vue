@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 // 状态提示图标（纯展示组件，无任何逻辑）：给成功 / 失败 / 警告 / 信息 /
 // 进行中提示配统一图标。用实心（fill=currentColor）而非描边——16px 小尺寸
-// 下描边线条过细、深色背景难以辨认；颜色仍随父级文字色。
+// 下描边线条过细、不易辨认；颜色仍随父级文字色，随主题自适应。
 //
 // 状态图标为 Heroicons v2 solid mini（20/solid，专为小尺寸设计）；
 // loading 为 Heroicons v2 solid arrow-path + animate-spin。

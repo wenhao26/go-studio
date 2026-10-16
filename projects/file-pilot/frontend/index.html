@@ -4,6 +4,17 @@
     <meta charset="UTF-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>FilePilot</title>
+    <script>
+        // 首帧渲染前恢复主题，避免深色用户看到浅色闪屏。
+        // 键名与 src/lib/theme.ts 保持一致；此处不能 import，故内联。
+        try {
+            if (localStorage.getItem('file-pilot:theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+            }
+        } catch (e) {
+            /* 读取失败按浅色处理。 */
+        }
+    </script>
 </head>
 <body>
 <div id="app"></div>

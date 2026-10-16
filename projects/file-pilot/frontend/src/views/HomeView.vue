@@ -151,32 +151,32 @@ async function startScan(): Promise<void> {
 
 <template>
   <section class="mx-auto h-full max-w-3xl overflow-y-auto px-6 py-8">
-    <h1 class="text-2xl font-semibold text-slate-100">开始扫描</h1>
-    <p class="mt-1 text-sm text-slate-400">选择一个目录，配置扫描参数后开始。</p>
+    <h1 class="text-2xl font-semibold text-slate-900 dark:text-slate-100">开始扫描</h1>
+    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">选择一个目录，配置扫描参数后开始。</p>
 
-    <p v-if="loading" class="mt-6 flex items-center gap-2 text-sm text-slate-400">
+    <p v-if="loading" class="mt-6 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
       <StatusIcon kind="loading" />
       正在加载设置…
     </p>
-    <p v-else-if="loadError" class="mt-6 flex items-center gap-2 rounded-md border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
+    <p v-else-if="loadError" class="mt-6 flex items-center gap-2 rounded-md border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-600 dark:border-rose-400/40 dark:bg-rose-500/10 dark:text-rose-300">
       <StatusIcon kind="error" />
       {{ loadError }}
     </p>
 
     <template v-else>
-      <div class="mt-6 rounded-xl border border-slate-700/60 bg-slate-800/40 p-5">
+      <div class="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40 dark:shadow-none">
         <div class="flex items-center justify-between">
-          <h2 class="text-sm font-semibold text-slate-200">扫描目录</h2>
-          <span class="text-xs text-slate-500">预计文件：未知</span>
+          <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">扫描目录</h2>
+          <span class="text-xs text-slate-400 dark:text-slate-500">预计文件：未知</span>
         </div>
 
         <div class="mt-3 flex items-center gap-3">
-          <div class="min-w-0 flex-1 truncate rounded-md border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm" :class="selectedDir ? 'text-slate-200' : 'text-slate-500'">
+          <div class="min-w-0 flex-1 truncate rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900/60" :class="selectedDir ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500'">
             {{ selectedDir || '尚未选择目录' }}
           </div>
           <button
             type="button"
-            class="shrink-0 rounded-md border border-slate-600 bg-slate-700/60 px-4 py-2 text-sm text-slate-100 hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+            class="shrink-0 rounded-md border border-slate-300 bg-slate-100 px-4 py-2 text-sm text-slate-700 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-700/60 dark:text-slate-100 dark:hover:bg-slate-700"
             :disabled="picking"
             @click="chooseDirectory"
           >
@@ -184,22 +184,22 @@ async function startScan(): Promise<void> {
           </button>
         </div>
 
-        <p v-if="dirNotice" class="mt-2 flex items-center gap-1.5 text-xs text-amber-300">
+        <p v-if="dirNotice" class="mt-2 flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-300">
           <StatusIcon kind="warning" />
           {{ dirNotice }}
         </p>
 
         <div class="mt-4">
-          <div class="text-xs text-slate-500">最近目录</div>
+          <div class="text-xs text-slate-400 dark:text-slate-500">最近目录</div>
           <div v-if="recentDirs.length" class="mt-2 flex flex-wrap gap-2">
             <div
               v-for="dir in recentDirs"
               :key="dir"
-              class="flex max-w-full items-center rounded-full border border-slate-600 text-xs text-slate-300 hover:border-slate-500"
+              class="flex max-w-full items-center rounded-full border border-slate-300 text-xs text-slate-700 hover:border-slate-400 dark:border-slate-600 dark:text-slate-300 dark:hover:border-slate-500"
             >
               <button
                 type="button"
-                class="truncate py-1 pl-3 pr-1 hover:text-white"
+                class="truncate py-1 pl-3 pr-1 hover:text-slate-900 dark:hover:text-white"
                 :title="dir"
                 @click="selectRecent(dir)"
               >
@@ -207,7 +207,7 @@ async function startScan(): Promise<void> {
               </button>
               <button
                 type="button"
-                class="shrink-0 py-1 pl-1 pr-2 text-slate-500 transition-colors hover:text-rose-300"
+                class="shrink-0 py-1 pl-1 pr-2 text-slate-400 transition-colors hover:text-rose-500 dark:text-slate-500 dark:hover:text-rose-300"
                 :title="`移除 ${dir}`"
                 :aria-label="`从最近目录移除 ${dir}`"
                 @click="removeRecent(dir)"
@@ -216,53 +216,53 @@ async function startScan(): Promise<void> {
               </button>
             </div>
           </div>
-          <p v-else class="mt-2 text-xs text-slate-500">暂无最近目录</p>
-          <p v-if="recentError" class="mt-2 flex items-center gap-1.5 text-xs text-rose-300">
+          <p v-else class="mt-2 text-xs text-slate-400 dark:text-slate-500">暂无最近目录</p>
+          <p v-if="recentError" class="mt-2 flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-300">
             <StatusIcon kind="error" />
             {{ recentError }}
           </p>
         </div>
       </div>
 
-      <div class="mt-5 rounded-xl border border-slate-700/60 bg-slate-800/40 p-5">
-        <h2 class="text-sm font-semibold text-slate-200">扫描配置</h2>
+      <div class="mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40 dark:shadow-none">
+        <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">扫描配置</h2>
 
         <div class="mt-3 flex items-center gap-3">
-          <label for="workers" class="w-28 shrink-0 text-sm text-slate-300">扫描并发数</label>
+          <label for="workers" class="w-28 shrink-0 text-sm text-slate-700 dark:text-slate-300">扫描并发数</label>
           <input
             id="workers"
             v-model.number="config.workers"
             type="number"
             min="1"
             max="64"
-            class="w-28 rounded-md border border-slate-700 bg-slate-900/60 px-3 py-1.5 text-sm text-slate-100 focus:border-indigo-400 focus:outline-none"
+            class="w-28 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-100"
             @input="onWorkersInput"
             @change="onConfigChange"
           />
-          <span class="text-xs text-slate-500">允许 1–64</span>
+          <span class="text-xs text-slate-400 dark:text-slate-500">允许 1–64</span>
         </div>
-        <p v-if="configError" class="mt-2 flex items-center gap-1.5 text-xs text-rose-300">
+        <p v-if="configError" class="mt-2 flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-300">
           <StatusIcon kind="error" />
           {{ configError }}
         </p>
 
         <div class="mt-4 space-y-3">
-          <label class="flex items-center gap-3 text-sm text-slate-300">
-            <input v-model="config.scan_hidden" type="checkbox" class="h-4 w-4 rounded border-slate-600 bg-slate-900" @change="onConfigChange" />
+          <label class="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
+            <input v-model="config.scan_hidden" type="checkbox" class="h-4 w-4 rounded border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-900" @change="onConfigChange" />
             扫描隐藏文件
           </label>
-          <label class="flex items-center gap-3 text-sm text-slate-300">
-            <input v-model="config.scan_system" type="checkbox" class="h-4 w-4 rounded border-slate-600 bg-slate-900" @change="onConfigChange" />
+          <label class="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
+            <input v-model="config.scan_system" type="checkbox" class="h-4 w-4 rounded border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-900" @change="onConfigChange" />
             扫描系统文件
           </label>
-          <label class="flex items-center gap-3 text-sm text-slate-300">
-            <input v-model="config.skip_large" type="checkbox" class="h-4 w-4 rounded border-slate-600 bg-slate-900" @change="onConfigChange" />
+          <label class="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
+            <input v-model="config.skip_large" type="checkbox" class="h-4 w-4 rounded border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-900" @change="onConfigChange" />
             跳过大文件（&gt; 1 GiB）
           </label>
         </div>
       </div>
 
-      <div v-if="running" class="mt-5 flex items-center gap-2 rounded-md border border-amber-400/40 bg-amber-400/10 px-4 py-3 text-sm text-amber-300">
+      <div v-if="running" class="mt-5 flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-400/40 dark:bg-amber-400/10 dark:text-amber-300">
         <StatusIcon kind="loading" />
         <span>当前有任务进行中。</span>
         <RouterLink to="/scan" class="underline">前往查看</RouterLink>
@@ -271,13 +271,13 @@ async function startScan(): Promise<void> {
       <div class="mt-6 flex items-center gap-4">
         <button
           type="button"
-          class="rounded-md bg-indigo-500 px-6 py-2.5 text-sm font-medium text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
+          class="rounded-md bg-indigo-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-indigo-500 dark:hover:bg-indigo-400"
           :disabled="picking || starting || running"
           @click="startScan"
         >
           {{ starting ? '启动中…' : '开始扫描' }}
         </button>
-        <span v-if="startError" class="flex items-center gap-1.5 text-sm text-rose-300">
+        <span v-if="startError" class="flex items-center gap-1.5 text-sm text-rose-600 dark:text-rose-300">
           <StatusIcon kind="error" />
           {{ startError }}
         </span>

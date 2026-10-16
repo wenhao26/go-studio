@@ -163,7 +163,7 @@ const reportIcon = computed((): 'success' | 'warning' | 'error' | 'info' => {
 </script>
 
 <template>
-  <section class="mx-auto flex h-full max-w-4xl flex-col px-6 py-6">
+  <section class="mx-auto flex h-full max-w-5xl flex-col px-6 py-6">
     <!-- 空态：无 scanID（未扫描或刷新后无历史入口） -->
     <div v-if="!hasScan" class="flex flex-1 flex-col items-center justify-center gap-3 text-center">
       <h2 class="text-xl font-semibold text-slate-800 dark:text-slate-200">暂无可整理的内容</h2>

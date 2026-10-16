@@ -150,7 +150,7 @@ async function startScan(): Promise<void> {
 </script>
 
 <template>
-  <section class="mx-auto h-full max-w-3xl overflow-y-auto px-6 py-8">
+  <section class="mx-auto h-full max-w-5xl overflow-y-auto px-6 py-8">
     <h1 class="text-2xl font-semibold text-slate-900 dark:text-slate-100">开始扫描</h1>
     <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">选择一个目录，配置扫描参数后开始。</p>
 

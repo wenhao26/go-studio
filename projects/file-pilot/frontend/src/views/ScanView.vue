@@ -125,7 +125,7 @@ function scanAgain(): void {
 </script>
 
 <template>
-  <section class="mx-auto flex h-full max-w-4xl flex-col px-6 py-6">
+  <section class="mx-auto flex h-full max-w-5xl flex-col px-6 py-6">
     <!-- 空态：无进行中任务 -->
     <div v-if="!hasTask" class="flex flex-1 flex-col items-center justify-center gap-3 text-center">
       <h2 class="text-xl font-semibold text-slate-800 dark:text-slate-200">当前没有进行中的扫描任务</h2>

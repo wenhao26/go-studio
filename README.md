@@ -202,6 +202,12 @@ make test-race  # go test -v -race -coverprofile=coverage.out ./...
 
 ---
 
-## 11. 许可
+## 11. 项目速览（Projects Summary）
+
+仓库内各子项目的功能、关键路径、构建产物等汇总见：[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)。
+
+该文件用于**快速了解每个项目定位与现状**，后续新增项目时需同步维护更新。
+
+## 12. 许可
 
 待补充（尚未确定 License）。

@@ -183,7 +183,7 @@ async function startScan(): Promise<void> {
 </script>
 
 <template>
-  <section class="mx-auto h-full max-w-5xl overflow-y-auto px-6 py-8">
+  <section class="mx-auto h-full max-w-5xl overflow-y-auto px-6 pt-6">
     <h1 class="text-2xl font-semibold text-slate-900 dark:text-slate-100">开始扫描</h1>
     <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">选择一个目录，配置扫描参数后开始。</p>
 
@@ -197,7 +197,7 @@ async function startScan(): Promise<void> {
     </p>
 
     <template v-else>
-      <div class="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40 dark:shadow-none">
+      <div class="mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40 dark:shadow-none">
         <div class="flex items-center justify-between">
           <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">扫描目录</h2>
           <span class="text-xs text-slate-400 dark:text-slate-500">预计文件：未知</span>
@@ -222,9 +222,9 @@ async function startScan(): Promise<void> {
           {{ dirNotice }}
         </p>
 
-        <div class="mt-4">
-          <div class="text-xs text-slate-400 dark:text-slate-500">最近目录</div>
-          <div v-if="recentDirs.length" class="mt-2 flex flex-wrap gap-2">
+        <div class="mt-3 flex flex-wrap items-center gap-2">
+          <span class="shrink-0 text-xs text-slate-400 dark:text-slate-500">最近目录</span>
+          <div v-if="recentDirs.length" class="flex flex-wrap gap-2">
             <div
               v-for="dir in recentDirs"
               :key="dir"
@@ -249,15 +249,15 @@ async function startScan(): Promise<void> {
               </button>
             </div>
           </div>
-          <p v-else class="mt-2 text-xs text-slate-400 dark:text-slate-500">暂无最近目录</p>
-          <p v-if="recentError" class="mt-2 flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-300">
+          <p v-else class="text-xs text-slate-400 dark:text-slate-500">暂无最近目录</p>
+          <p v-if="recentError" class="flex w-full items-center gap-1.5 text-xs text-rose-600 dark:text-rose-300">
             <StatusIcon kind="error" />
             {{ recentError }}
           </p>
         </div>
       </div>
 
-      <div class="mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40 dark:shadow-none">
+      <div class="mt-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40 dark:shadow-none">
         <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">扫描配置</h2>
 
         <div class="mt-3 flex items-center gap-3">
@@ -279,23 +279,23 @@ async function startScan(): Promise<void> {
           {{ configError }}
         </p>
 
-        <div class="mt-4 space-y-3">
-          <label class="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
+        <div class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+          <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
             <input v-model="config.scan_hidden" type="checkbox" class="h-4 w-4 rounded border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-900" @change="onConfigChange" />
             扫描隐藏文件
           </label>
-          <label class="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
+          <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
             <input v-model="config.scan_system" type="checkbox" class="h-4 w-4 rounded border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-900" @change="onConfigChange" />
             扫描系统文件
           </label>
-          <label class="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
+          <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
             <input v-model="config.skip_large" type="checkbox" class="h-4 w-4 rounded border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-900" @change="onConfigChange" />
             跳过大文件（&gt; 1 GiB）
           </label>
         </div>
       </div>
 
-      <div class="mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40 dark:shadow-none">
+      <div class="mt-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40 dark:shadow-none">
         <div class="flex items-center justify-between gap-3">
           <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">存储位置</h2>
           <span class="text-xs text-slate-400 dark:text-slate-500">只读</span>
@@ -309,62 +309,58 @@ async function startScan(): Promise<void> {
           {{ storageError }}
         </p>
 
-        <div class="mt-3 space-y-3">
-          <div class="group">
-            <div class="text-xs font-medium text-slate-600 dark:text-slate-300">数据库</div>
-            <div class="mt-1 flex items-center gap-2">
-              <code
-                class="min-w-0 flex-1 truncate rounded-md border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300"
-                :title="storage?.data_path || ''"
-              >
-                {{ storage?.data_path || '正在读取…' }}
-              </code>
-              <button
-                type="button"
-                class="shrink-0 rounded-md border border-transparent p-1.5 text-slate-400 transition-opacity hover:border-slate-300 hover:bg-slate-100 hover:text-slate-700 focus-visible:opacity-100 disabled:cursor-not-allowed dark:text-slate-500 dark:hover:border-slate-600 dark:hover:bg-slate-700/60 dark:hover:text-slate-100"
-                :class="storage?.data_path ? 'opacity-0 group-hover:opacity-100' : 'opacity-40'"
-                :disabled="!storage?.data_path || opening === 'data'"
-                title="打开数据库所在文件夹"
-                aria-label="打开数据库所在文件夹"
-                @click="openFolder('data')"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776" />
-                </svg>
-              </button>
-            </div>
+        <div class="mt-3 space-y-2">
+          <div class="group flex items-center gap-2">
+            <span class="w-12 shrink-0 text-xs font-medium text-slate-600 dark:text-slate-300">数据库</span>
+            <code
+              class="min-w-0 flex-1 truncate rounded-md border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300"
+              :title="storage?.data_path || ''"
+            >
+              {{ storage?.data_path || '正在读取…' }}
+            </code>
+            <button
+              type="button"
+              class="shrink-0 rounded-md border border-transparent p-1.5 text-slate-400 transition-opacity hover:border-slate-300 hover:bg-slate-100 hover:text-slate-700 focus-visible:opacity-100 disabled:cursor-not-allowed dark:text-slate-500 dark:hover:border-slate-600 dark:hover:bg-slate-700/60 dark:hover:text-slate-100"
+              :class="storage?.data_path ? 'opacity-0 group-hover:opacity-100' : 'opacity-40'"
+              :disabled="!storage?.data_path || opening === 'data'"
+              title="打开数据库所在文件夹"
+              aria-label="打开数据库所在文件夹"
+              @click="openFolder('data')"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776" />
+              </svg>
+            </button>
           </div>
 
-          <div class="group">
-            <div class="text-xs font-medium text-slate-600 dark:text-slate-300">日志</div>
-            <div class="mt-1 flex items-center gap-2">
-              <code
-                v-if="storage && storage.log_path"
-                class="min-w-0 flex-1 truncate rounded-md border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300"
-                :title="storage.log_path"
-              >
-                {{ storage.log_path }}
-              </code>
-              <p
-                v-else
-                class="min-w-0 flex-1 rounded-md border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500"
-              >
-                {{ storage ? '未写入文件（诊断日志降级为控制台输出）' : '正在读取…' }}
-              </p>
-              <button
-                type="button"
-                class="shrink-0 rounded-md border border-transparent p-1.5 text-slate-400 transition-opacity hover:border-slate-300 hover:bg-slate-100 hover:text-slate-700 focus-visible:opacity-100 disabled:cursor-not-allowed dark:text-slate-500 dark:hover:border-slate-600 dark:hover:bg-slate-700/60 dark:hover:text-slate-100"
-                :class="storage?.log_path ? 'opacity-0 group-hover:opacity-100' : 'opacity-40'"
-                :disabled="!storage?.log_path || opening === 'log'"
-                title="打开日志所在文件夹"
-                aria-label="打开日志所在文件夹"
-                @click="openFolder('log')"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776" />
-                </svg>
-              </button>
-            </div>
+          <div class="group flex items-center gap-2">
+            <span class="w-12 shrink-0 text-xs font-medium text-slate-600 dark:text-slate-300">日志</span>
+            <code
+              v-if="storage && storage.log_path"
+              class="min-w-0 flex-1 truncate rounded-md border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300"
+              :title="storage.log_path"
+            >
+              {{ storage.log_path }}
+            </code>
+            <p
+              v-else
+              class="min-w-0 flex-1 rounded-md border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500"
+            >
+              {{ storage ? '未写入文件（诊断日志降级为控制台输出）' : '正在读取…' }}
+            </p>
+            <button
+              type="button"
+              class="shrink-0 rounded-md border border-transparent p-1.5 text-slate-400 transition-opacity hover:border-slate-300 hover:bg-slate-100 hover:text-slate-700 focus-visible:opacity-100 disabled:cursor-not-allowed dark:text-slate-500 dark:hover:border-slate-600 dark:hover:bg-slate-700/60 dark:hover:text-slate-100"
+              :class="storage?.log_path ? 'opacity-0 group-hover:opacity-100' : 'opacity-40'"
+              :disabled="!storage?.log_path || opening === 'log'"
+              title="打开日志所在文件夹"
+              aria-label="打开日志所在文件夹"
+              @click="openFolder('log')"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776" />
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -380,7 +376,8 @@ async function startScan(): Promise<void> {
         <RouterLink to="/scan" class="underline">前往查看</RouterLink>
       </div>
 
-      <div class="mt-6 flex items-center gap-4">
+      <!-- 主操作常驻：内容再长也固定在窗口底部，避免「开始扫描」被挤出首屏 -->
+      <div class="sticky bottom-0 z-10 mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 pb-4">
         <button
           type="button"
           class="rounded-md bg-indigo-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-indigo-500 dark:hover:bg-indigo-400"

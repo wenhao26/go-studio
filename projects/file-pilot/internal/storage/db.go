@@ -31,7 +31,17 @@ const (
 
 // Store 是 SQLite 数据访问入口，一个进程只应打开一个实例。
 type Store struct {
-	db *sql.DB
+	db   *sql.DB
+	path string
+}
+
+// Path 返回本实例实际打开的数据库文件路径；用于界面向用户展示保存位置，
+// 不做任何路径推断（展示值必须与真正打开的库一致）。
+func (s *Store) Path() string {
+	if s == nil {
+		return ""
+	}
+	return s.path
 }
 
 // DefaultPath 返回默认数据库文件路径：`<用户配置目录>/FilePilot/file-pilot.db`
@@ -65,7 +75,7 @@ func Open(ctx context.Context, path string) (*Store, error) {
 	// 单连接串行（裁决 D-A2）：在 Ping 之前设置，初始化阶段也不产生并发连接。
 	db.SetMaxOpenConns(1)
 
-	store := &Store{db: db}
+	store := &Store{db: db, path: path}
 	if err := store.applyPragmas(ctx); err != nil {
 		db.Close()
 		return nil, err

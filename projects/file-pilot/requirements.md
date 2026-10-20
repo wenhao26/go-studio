@@ -18,6 +18,7 @@
 | R3 | 2026-10-15 | 分类算法改用**口径 B**：§5.2 改写为「语义优先选类 + 置信度取跨类别命中总分封顶 100」，校验示例由 4 条扩为 6 条（均标注命中项与 matched）；§5.6 原因规则改为「取决定类别的命中项中分值最高者」并给出并列裁决顺序；§十五 R-1~R-9 复核通过、全部采纳 | 需求方裁决 P0-4、C-2、R-1~R-9（证据见 `development/00-phase-0-prerequisites.md`） |
 | R4 | 2026-10-15 | §8.1 `StartScan` 入参改为 `rootPath, ScanConfig`：根目录由显式参数传入，不再隐式依赖 `settings` 中的暂存状态（原契约 `StartScan(ScanConfig)` 存在参数缺口） | 需求方 Phase 1 裁决（证据见 `development/01-phase-1-scan.md` §6） |
 | R5 | 2026-10-15 | §8.1 新增绑定 `GetRecoveryNotice`：FR-12 要求「异常恢复后提示用户」，而原契约仅有 `GetActiveTask`（恢复后无活动任务即返回 null），前端无信号可感知「本次启动刚恢复了中断任务」。新增查询返回 `RecoveryNotice`（`{recovered_tasks, recovered_scans}`），无恢复时返回 `null` | 需求方裁决（FR-12 落地缺口；证据见 `development/01-phase-1-scan.md` §6） |
+| R6 | 2026-10-20 | §8.1 新增只读绑定 `GetStorageInfo` / `OpenStorageFolder`：首页展示数据库与诊断日志文件的**真实路径**，并提供「打开所在目录」入口。**仅展示，不提供修改/迁移**；路径由后端解析，前端只传 `kind` 枚举 | 需求方 2026-10-20 裁决（v1.2：存储透明度） |
 
 **修订原则**：本文档是需求的唯一权威来源。实现与本文档不一致时，以本文档为准；本文档内部冲突时，先修订本文档再改代码。细化推导得到的裁决集中列于 §十五（已于 2026-10-15 需求方复核采纳）；后续新增的待确认裁决同样列于 §十五，进入编码前复核。
 
@@ -387,6 +388,8 @@ pending ──start──► running ──finish───► completed
 | `StartOrganize` | `scanID` | `int64(taskID), error` | **仅在前端二次确认后调用**；含目标目录预检 |
 | `GetOrganizeReport` | `taskID` | `OrganizeReport, error` | FR-10 |
 | `UndoLastOrganize` | `scanID` | `int64(taskID), error` | FR-11；已撤销/无可撤销返回业务错误 |
+| `GetStorageInfo` | — | `StorageInfo, error` | 只读：返回 `{data_path, log_path}`（日志降级时 `log_path=""`），不提供修改入口 |
+| `OpenStorageFolder` | `kind` (`data`\|`log`) | `error` | 只读：打开对应文件**所在目录**；路径由后端解析，前端不得传路径；失败返回 `ErrStorageUnavailable` |
 
 ### 8.2 事件（Go → JS 推送）
 

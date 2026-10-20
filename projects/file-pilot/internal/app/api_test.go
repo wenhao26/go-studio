@@ -25,6 +25,8 @@ func TestAPI_ExposesOnlyContractMethods(t *testing.T) {
 		"StartOrganize":      false,
 		"GetOrganizeReport":  false,
 		"UndoLastOrganize":   false,
+		"GetStorageInfo":     false,
+		"OpenStorageFolder":  false,
 	}
 
 	rt := reflect.TypeOf((*API)(nil))

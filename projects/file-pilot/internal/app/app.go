@@ -48,6 +48,10 @@ type App struct {
 	// publish 是事件发布的注入点：生产实现为 publishEvent（Wails 运行时广播），
 	// 测试注入记录器——Wails 运行时不在场时 EventsEmit 会 panic。
 	publish func(name string, payload any)
+
+	// openFolder 是打开目录的注入点：生产实现为 openFolderNative（资源管理器），
+	// 测试注入记录器——单测不得真的弹出系统窗口。
+	openFolder func(dir string) error
 }
 
 // New 装配 App。
@@ -68,6 +72,8 @@ func New(store *storage.Store, logger *diag.Log) *App {
 	a.tasks = task.NewManager(storeAdapter{store: store}, a)
 	// 事件发布的默认实现走 Wails 运行时；测试注入记录器（events.go）。
 	a.publish = a.publishEvent
+	// 打开目录的默认实现走系统资源管理器；测试注入记录器（storage.go）。
+	a.openFolder = openFolderNative
 	return a
 }
 

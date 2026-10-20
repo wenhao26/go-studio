@@ -34,8 +34,16 @@ export function GetSettings() {
   return window['go']['app']['API']['GetSettings']();
 }
 
+export function GetStorageInfo() {
+  return window['go']['app']['API']['GetStorageInfo']();
+}
+
 export function ListFiles(arg1, arg2, arg3, arg4) {
   return window['go']['app']['API']['ListFiles'](arg1, arg2, arg3, arg4);
+}
+
+export function OpenStorageFolder(arg1) {
+  return window['go']['app']['API']['OpenStorageFolder'](arg1);
 }
 
 export function RemoveRecentDir(arg1) {

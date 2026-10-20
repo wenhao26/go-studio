@@ -74,6 +74,16 @@ func NewStderr() *Log {
 	return &Log{Logger: newLogger(zapcore.AddSync(os.Stderr))}
 }
 
+// FilePath 返回日志文件路径；降级为 stderr 时返回空字符串（没有文件）。
+//
+// 供「存储位置」展示使用：界面必须显示真正在写的文件，而不是重新推断的路径。
+func (l *Log) FilePath() string {
+	if l == nil || l.w == nil {
+		return ""
+	}
+	return l.w.Path()
+}
+
 // newLogger 组装 JSON 输出核心：ISO8601 时间（时间戳必须可被工具解析）、
 // caller 位置、error 级别堆栈（NFR-3）。
 func newLogger(ws zapcore.WriteSyncer) *zap.Logger {
@@ -129,6 +139,14 @@ func newRotateWriter(path string, limit int64) (*RotateWriter, error) {
 		return nil, fmt.Errorf("stat log file %q: %w", path, err)
 	}
 	return &RotateWriter{path: path, limit: limit, file: file, size: info.Size()}, nil
+}
+
+// Path 返回日志文件路径；构造后不再变化，读取无需持锁。
+func (w *RotateWriter) Path() string {
+	if w == nil {
+		return ""
+	}
+	return w.path
 }
 
 // Write 实现 io.Writer：超限时先滚动再写。

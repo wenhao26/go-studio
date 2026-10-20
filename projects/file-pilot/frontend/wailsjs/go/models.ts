@@ -222,6 +222,20 @@ export namespace app {
 	        this.recent_dirs = source["recent_dirs"];
 	    }
 	}
+	export class StorageInfo {
+	    data_path: string;
+	    log_path: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new StorageInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.data_path = source["data_path"];
+	        this.log_path = source["log_path"];
+	    }
+	}
 
 }
 

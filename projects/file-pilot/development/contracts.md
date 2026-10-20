@@ -131,6 +131,7 @@ fsx         （Infrastructure：文件系统抽象 + 平台属性）
 | `ErrTargetDirCreate` | `create target dir failed`（Phase 3） | 目标目录创建失败 | 无法创建整理目录 |
 | `ErrNothingToUndo` | `nothing to undo`（Phase 3） | 无可撤销整理 | 没有可撤销的整理 |
 | `ErrAlreadyUndone` | `already undone`（Phase 3） | 已撤销 | 该整理已撤销 |
+| `ErrStorageUnavailable` | `storage folder unavailable`（v1.2） | 存储目录不存在 / 非目录 / 打开失败 | 无法打开存储目录 |
 
 约定：错误一律 `fmt.Errorf("...: %w", err)` 包装，判别用 `errors.Is/As`，业务代码禁止 `panic`（`AGENTS.md` §9.5/§65）。
 
@@ -138,7 +139,7 @@ fsx         （Infrastructure：文件系统抽象 + 平台属性）
 
 ---
 
-## 5. Wails 绑定方法契约（v1 全集，15 个）
+## 5. Wails 绑定方法契约（v1 全集，17 个）
 
 | 方法 | 入参 | 返回 | 关键约束 |
 |---|---|---|---|
@@ -157,8 +158,10 @@ fsx         （Infrastructure：文件系统抽象 + 平台属性）
 | `StartOrganize` | `scanID` | `int64(taskID), error` | **前端二次确认后**调用；含预检 |
 | `GetOrganizeReport` | `taskID` | `OrganizeReport, error` | |
 | `UndoLastOrganize` | `scanID` | `int64(taskID), error` | 已撤销/无可撤销返回哨兵错误 |
+| `GetStorageInfo` | — | `{data_path, log_path}, error` | 只读展示实际打开的文件路径；日志降级时 `log_path=""` |
+| `OpenStorageFolder` | `kind` (`data`\|`log`) | `error` | 只读：打开对应文件所在目录；前端只传枚举，路径由后端解析 |
 
-> 注：`GetSettings`/`SaveSettings` 合并计 2 个方法，合计 15 个绑定入口（`requirements.md` §8.1 表述为「全集」）。以 `requirements.md` 为准。
+> 注：`GetSettings`/`SaveSettings` 合并计 2 个方法，合计 17 个绑定入口（`requirements.md` §8.1 表述为「全集」）。以 `requirements.md` 为准。
 
 ---
 

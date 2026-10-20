@@ -60,6 +60,16 @@ func (api *API) GetRecoveryNotice() (*RecoveryNotice, error) {
 	return api.app.GetRecoveryNotice()
 }
 
+// GetStorageInfo 返回数据库与诊断日志文件的真实路径（只读展示）。
+func (api *API) GetStorageInfo() (StorageInfo, error) {
+	return api.app.GetStorageInfo()
+}
+
+// OpenStorageFolder 打开数据/日志文件所在目录（kind: data|log）。
+func (api *API) OpenStorageFolder(kind string) error {
+	return api.app.OpenStorageFolder(kind)
+}
+
 // GetScanSummary 返回一次扫描的终态统计（FR-5）。
 func (api *API) GetScanSummary(scanID int64) (ScanSummary, error) {
 	return api.app.GetScanSummary(scanID)

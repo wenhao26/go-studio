@@ -30,6 +30,8 @@ const FRIENDLY_MESSAGES: Record<string, string> = {
   'nothing to undo': '没有可撤销的整理',
   // app.ErrAlreadyUndone（Phase 3 / FR-11）
   'already undone': '该整理已撤销',
+  // app.ErrStorageUnavailable（v1.2 / 存储位置展示）
+  'storage folder unavailable': '无法打开存储目录',
 }
 
 // GENERIC_ERROR 是未映射错误的统一文案（原始 error 只进诊断日志）。

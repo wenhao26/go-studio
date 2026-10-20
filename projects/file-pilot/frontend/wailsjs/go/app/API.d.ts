@@ -19,7 +19,11 @@ export function GetScanSummary(arg1:number):Promise<app.ScanSummary>;
 
 export function GetSettings():Promise<app.Settings>;
 
+export function GetStorageInfo():Promise<app.StorageInfo>;
+
 export function ListFiles(arg1:number,arg2:string,arg3:number,arg4:number):Promise<app.FilePage>;
+
+export function OpenStorageFolder(arg1:string):Promise<void>;
 
 export function RemoveRecentDir(arg1:string):Promise<void>;
 

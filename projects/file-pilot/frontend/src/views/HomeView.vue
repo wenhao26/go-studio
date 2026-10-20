@@ -5,10 +5,11 @@
 // - 未选目录点开始：前端拦截（不调后端，FR-1）；
 // - 并发数非法：前端即时提示，不静默钳制（FR-2）；
 // - 「预计文件」恒为「未知」：不做预扫描/估算（FR-1）。
+// - 存储位置卡片（v1.2）为只读展示：路径取自后端实际打开的文件，仅提供「打开目录」。
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import * as API from '../../wailsjs/go/app/API'
-import type { scanner } from '../../wailsjs/go/models'
+import type { app, scanner } from '../../wailsjs/go/models'
 import StatusIcon from '../components/StatusIcon.vue'
 import { friendlyMessage, NOT_SELECTED_DIR } from '../lib/errors'
 import { ensureTask, hasRunningTask } from '../lib/task'
@@ -24,6 +25,12 @@ const config = reactive({
 
 const selectedDir = ref('')
 const recentDirs = ref<string[]>([])
+
+// 存储位置（只读展示）：路径由后端返回真正打开的文件，前端不做推断。
+const storage = ref<app.StorageInfo | null>(null)
+const storageError = ref('')
+const openError = ref('')
+const opening = ref<'data' | 'log' | ''>('')
 
 const loading = ref(true)
 const loadError = ref('')
@@ -65,7 +72,33 @@ async function loadSettings(): Promise<void> {
 
 onMounted(() => {
   void loadSettings()
+  void loadStorage()
 })
+
+// loadStorage 读取数据库/日志文件的真实路径：失败只影响该卡片，不影响扫描。
+async function loadStorage(): Promise<void> {
+  try {
+    storage.value = await API.GetStorageInfo()
+  } catch (err) {
+    storageError.value = friendlyMessage(err)
+  }
+}
+
+// openFolder 打开数据/日志文件所在目录（只读操作，不修改任何配置）。
+async function openFolder(kind: 'data' | 'log'): Promise<void> {
+  if (opening.value) {
+    return
+  }
+  openError.value = ''
+  opening.value = kind
+  try {
+    await API.OpenStorageFolder(kind)
+  } catch (err) {
+    openError.value = friendlyMessage(err)
+  } finally {
+    opening.value = ''
+  }
+}
 
 async function chooseDirectory(): Promise<void> {
   if (picking.value) {
@@ -260,6 +293,85 @@ async function startScan(): Promise<void> {
             跳过大文件（&gt; 1 GiB）
           </label>
         </div>
+      </div>
+
+      <div class="mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40 dark:shadow-none">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">存储位置</h2>
+          <span class="text-xs text-slate-400 dark:text-slate-500">只读</span>
+        </div>
+        <p class="mt-1 text-xs text-slate-400 dark:text-slate-500">
+          数据与日志保存在本机；鼠标移到路径上，可点击右侧图标打开所在文件夹。
+        </p>
+
+        <p v-if="storageError" class="mt-3 flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-300">
+          <StatusIcon kind="error" />
+          {{ storageError }}
+        </p>
+
+        <div class="mt-3 space-y-3">
+          <div class="group">
+            <div class="text-xs font-medium text-slate-600 dark:text-slate-300">数据库</div>
+            <div class="mt-1 flex items-center gap-2">
+              <code
+                class="min-w-0 flex-1 truncate rounded-md border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300"
+                :title="storage?.data_path || ''"
+              >
+                {{ storage?.data_path || '正在读取…' }}
+              </code>
+              <button
+                type="button"
+                class="shrink-0 rounded-md border border-transparent p-1.5 text-slate-400 transition-opacity hover:border-slate-300 hover:bg-slate-100 hover:text-slate-700 focus-visible:opacity-100 disabled:cursor-not-allowed dark:text-slate-500 dark:hover:border-slate-600 dark:hover:bg-slate-700/60 dark:hover:text-slate-100"
+                :class="storage?.data_path ? 'opacity-0 group-hover:opacity-100' : 'opacity-40'"
+                :disabled="!storage?.data_path || opening === 'data'"
+                title="打开数据库所在文件夹"
+                aria-label="打开数据库所在文件夹"
+                @click="openFolder('data')"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="group">
+            <div class="text-xs font-medium text-slate-600 dark:text-slate-300">日志</div>
+            <div class="mt-1 flex items-center gap-2">
+              <code
+                v-if="storage && storage.log_path"
+                class="min-w-0 flex-1 truncate rounded-md border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300"
+                :title="storage.log_path"
+              >
+                {{ storage.log_path }}
+              </code>
+              <p
+                v-else
+                class="min-w-0 flex-1 rounded-md border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500"
+              >
+                {{ storage ? '未写入文件（诊断日志降级为控制台输出）' : '正在读取…' }}
+              </p>
+              <button
+                type="button"
+                class="shrink-0 rounded-md border border-transparent p-1.5 text-slate-400 transition-opacity hover:border-slate-300 hover:bg-slate-100 hover:text-slate-700 focus-visible:opacity-100 disabled:cursor-not-allowed dark:text-slate-500 dark:hover:border-slate-600 dark:hover:bg-slate-700/60 dark:hover:text-slate-100"
+                :class="storage?.log_path ? 'opacity-0 group-hover:opacity-100' : 'opacity-40'"
+                :disabled="!storage?.log_path || opening === 'log'"
+                title="打开日志所在文件夹"
+                aria-label="打开日志所在文件夹"
+                @click="openFolder('log')"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <p v-if="openError" class="mt-3 flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-300">
+          <StatusIcon kind="error" />
+          {{ openError }}
+        </p>
       </div>
 
       <div v-if="running" class="mt-5 flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-400/40 dark:bg-amber-400/10 dark:text-amber-300">

@@ -48,6 +48,12 @@ var (
 	// 最接近的可撤销整理任务已经标记 undone。
 	ErrAlreadyUndone = errors.New("already undone")
 
+	// ErrStorageUnavailable 存储目录不可用（v1.2 / §8.1 OpenStorageFolder）。
+	//
+	// 覆盖目录不存在、路径不是目录、系统文件管理器启动失败；目录中的 DB/日志
+	// 路径由后端解析，前端无法传入任意路径。
+	ErrStorageUnavailable = errors.New("storage folder unavailable")
+
 	// errNotStarted 绑定在应用启动完成前被调用：这不是业务错误，
 	// 前端不应有对应入口，故不入 contracts §4 映射表。
 	errNotStarted = errors.New("app not started")
